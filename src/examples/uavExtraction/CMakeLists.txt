@@ -9,7 +9,6 @@ set(CMAKE_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
 
 find_package(PCL 1.7 REQUIRED)
 find_package(Eigen REQUIRED)
-find_package(OpenMP)
 find_package(GSL REQUIRED)
 find_package(SFML 2.5 COMPONENTS graphics REQUIRED)
 
@@ -28,7 +27,6 @@ include_directories(${CMAKE_SOURCE_DIR}/../../bodies
 link_directories(/usr/local/lib)
 
 set(SRCS
-    UAVExtraction.cpp
     ${CMAKE_SOURCE_DIR}/../../fitting/AirfoilFitter.cpp
     ${CMAKE_SOURCE_DIR}/../../fitting/FuselageFitter.cpp
     ${CMAKE_SOURCE_DIR}/../../geometry/GeometryExtractor.cpp
@@ -36,10 +34,10 @@ set(SRCS
     ${CMAKE_SOURCE_DIR}/../../gui/DrawUAV.cpp
     ${CMAKE_SOURCE_DIR}/../../io/IOHandler.cpp
     ${CMAKE_SOURCE_DIR}/../../bodies/Airfoil.cpp
-    ${CMAKE_SOURCE_DIR}/../../bodies/Fuselage.cpp)
+    ${CMAKE_SOURCE_DIR}/../../bodies/Fuselage.cpp
+    UAVExtraction.cpp)
 
 add_executable (uavExtraction ${SRCS})
 target_link_libraries (uavExtraction PRIVATE ${PCL_LIBRARIES})
-target_link_libraries(uavExtraction PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(uavExtraction PRIVATE GSL::gsl GSL::gslcblas)
 target_link_libraries (uavExtraction PUBLIC sfml-graphics)
