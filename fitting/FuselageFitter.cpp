@@ -4,13 +4,13 @@
 
 #include "FuselageFitter.hpp"
 
-FuselageFitter::FuselageFitter(Fuselage& section_) {
+FuselageFitter::FuselageFitter(Fuselage& section_) : section(section_){
     section = section_;
 }
 
 void FuselageFitter::circularFit() {
 
-    FuselageParameters params = section.getFuselageParameter();
+    FuselageParameter params = section.getFuselageParameter();
     double radius = (params.disX + params.disY)/2;
 
     std::vector<Eigen::Vector2d> newPoints(360);
@@ -27,7 +27,7 @@ void FuselageFitter::circularFit() {
 }
 
 void FuselageFitter::ellipseFit() {
-    FuselageParameters params = section.getFuselageParameter();
+    FuselageParameter params = section.getFuselageParameter();
 
     std::vector<Eigen::Vector2d> newPoints(360);
     for(int i = 0; i < 360; i++) {
@@ -36,14 +36,14 @@ void FuselageFitter::ellipseFit() {
         double yi = params.yM + params.disY * std::sin(degree);
         newPoints[i] = Eigen::Vector2d(xi, yi);
     }
-    io.writingPointCloud(name, newPoints);
+    io.writingPointCloud(params.name, newPoints);
     params.epsilon = 1.0;
     section.setAllFuselageParameter(params);
 }
 
 void FuselageFitter::superellipseFit() {
-    FuselageParameters params = section.getFuselageParameter();
-    std::vector<Eigen::Vector2d> points(section.getFuselage()->points->size());
+    FuselageParameter params = section.getFuselageParameter();
+    std::vector<Eigen::Vector2d> points(section.getFuselage()->points.size());
     for(int i = 0; i < points.size(); i++) {
         points[i][0] = section.getFuselage()->points[i].x - params.xM;
         points[i][1] = section.getFuselage()->points[i].z - params.yM;

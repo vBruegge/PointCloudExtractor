@@ -1,3 +1,6 @@
+#ifndef UAV_H
+#define UAV_H
+
 #include <SFML/Graphics.hpp>
 #include <cassert>
 #include <pcl/point_types.h>
@@ -31,3 +34,4 @@ private:
 
 void sectionGenerationGUI(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
+#endif

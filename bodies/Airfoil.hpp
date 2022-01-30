@@ -1,3 +1,6 @@
+#ifndef AIRFOIL_H
+#define AIRFOIL_H
+
 #include <pcl/common/common_headers.h>
 #include <pcl/point_cloud.h>
 
@@ -15,11 +18,14 @@ public:
     float offset;
     float sweep;
     float trailingEdgeWidth;
+    enum parameterType {CuttingDistance, ChordLength, Dihedral, Twist, FlapPosition, Offset, Sweep, TrailingEdgeWidth};
 };
 
 class Airfoil {
 public:
     Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_);
+
+    Airfoil() = default;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr getFoil();
 
@@ -27,7 +33,7 @@ public:
 
     AirfoilParameter getAirfoilParameter();
 
-    void setAnyAirfoilParameter(std::string& parameter, float value);
+    void setAnyAirfoilParameter(AirfoilParameter::parameterType type, float value);
 
     void setAllAirfoilParameter(AirfoilParameter& parameters_);
 
@@ -51,3 +57,5 @@ private:
     pcl::PointCloud<pcl::PointXYZ>::Ptr foil;
     AirfoilParameter parameters;
 };
+
+#endif

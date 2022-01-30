@@ -1,18 +1,21 @@
 #include "GeometryExtractor.hpp"
 
-#include <pcl/ModelCoefficients.h>
 #include <pcl/filters/project_inliers.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_types.h>
 #include <pcl/common/geometry.h>
+#include <pcl/common/transforms.h>
+
+#include <gsl/gsl_multifit.h>
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_math.h>
 
 #include <pcl/io/pcd_io.h>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
 #include <thread>
-#include "Writer.hpp"
 
 Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded){
   // function generates a plane section at a defined distance from origin. It uses the normal vectors of the mesh to create a plane.
@@ -111,7 +114,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   Airfoil foil;
   if(flapRotationNeeded == true)
     //derotate flaps
-  foil =  derotate_flap(cloudPassThrough, abs(angleCuttingPlane));
+  foil =  derotateFlap(cloudPassThrough, abs(angleCuttingPlane));
   else {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::copyPointCloud(*cloudPassThrough, *cloudNoNormals);
@@ -120,7 +123,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
     parameters.flapPosition = 0.0;
     foil = Airfoil(cloudNoNormals, parameters);
   }
-  foil.setAllAirfoilParameter("cuttingDistance", cuttingDistance);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::CuttingDistance, cuttingDistance);
 
   //pcl::io::savePCDFile("foil_new.txt", *foil->section);
   return foil;
@@ -166,7 +169,7 @@ Fuselage GeometryExtractor::sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr
   Fuselage fuselageSection;
   fuselageSection.setFuselage(section);
   fuselageSection.computeFuselageParameter();
-  fuselageSection.setAnyFuselageParameter("cuttingDistance", cuttingDistance);
+  fuselageSection.setAnyFuselageParameter(FuselageParameter::parameterType::CuttingDistance, cuttingDistance);
 
   return fuselageSection;
 }
@@ -218,19 +221,20 @@ Airfoil GeometryExtractor::sectioningCloudZ(pcl::PointCloud<pcl::PointNormal>::P
   pcl::transformPointCloud (*section, *sectionRotated, transformationSection);
 
   Airfoil foil;
-  if(flapRotationNeeded == true)
+  if(flapRotationNeeded == true) {
     //derotate flaps
-    foil = derotate_flap(sectionRotated, 0.0);
-    foil.setAnyAirfoilParameter("dihedral", 90.0);
+    foil = derotateFlap(sectionRotated, 0.0);
+    foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::Dihedral, 90.0);
+  }
   else {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::copyPointCloud(*sectionRotated, *cloudNoNormals);
     AirfoilParameter parameter;
-    parameters.dihedral = 90.0;
-    parameters.flapPosition = 0.0;
-    foil = Airfoil(cloudNoNormals, parameters);
+    parameter.dihedral = 90.0;
+    parameter.flapPosition = 0.0;
+    foil = Airfoil(cloudNoNormals, parameter);
   }
-  foil.setAllAirfoilParameter("cuttingDistance", cuttingDistance);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::CuttingDistance, cuttingDistance);
   //pcl::io::savePCDFile("foil_new.txt", *flap->section);
   return foil;
 }
@@ -240,13 +244,13 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
 
   float rotationAngle;
 
-  std::vector<int> indexMinMax = findLeadingTrailingEdge(foil.getFoil()); //find index of min and max of the input cloud
+  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil()); //find index of min and max of the input cloud
 
   //vector from trailingEdge to leadingEdge
   Eigen::Vector3f centerLineVector;
   centerLineVector[0] = 0.0;
-  centerLineVector[1] = inputCloud->points[indexMinMax[0]].y-inputCloud->points[indexMinMax[1]].y; 
-  centerLineVector[2] = inputCloud->points[indexMinMax[0]].z-inputCloud->points[indexMinMax[1]].z;
+  centerLineVector[1] = foil.getFoil()->points[indexMinMax[0]].y-foil.getFoil()->points[indexMinMax[1]].y; 
+  centerLineVector[2] = foil.getFoil()->points[indexMinMax[0]].z-foil.getFoil()->points[indexMinMax[1]].z;
   rotationAngle = pcl::getAngle3D(Eigen::Vector3f::UnitY(), centerLineVector, false);
   if(rotationAngle > M_PI/2)
     rotationAngle = M_PI - rotationAngle;
@@ -281,13 +285,13 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
   {
     foil.setFoil(rotatedInverse);
   }
-  foil.setAnyAirfoilParameter("twist", rotationAngle*180.0/M_PI);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::Twist, rotationAngle*180.0/M_PI);
 }
 
 void GeometryExtractor::translateSection(Airfoil& foil){
   //translates center of the Point Cloud to Point Zero
 
-  std::vector<int> indexMinMax = findLeadingTrailingEdge(foil.getFoil());
+  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil());
   pcl::PointXYZ minPt = foil.getFoil()->points[indexMinMax[0]];
   pcl::PointXYZ maxPt = foil.getFoil()->points[indexMinMax[1]];
 
@@ -306,7 +310,7 @@ void GeometryExtractor::translateSection(Airfoil& foil){
   foil.setAllAirfoilParameter(parameters);
 }
 
-int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::Ptr inputCloud, std::vector<int> indexLeadingTrailingEdge) {
+int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::Ptr inputCloud, std::vector<int>& indexLeadingTrailingEdge) {
   //find flap position in foil
   //output: x coordinate of the flap, rotation angle and index of the flap position
   int indexLeadingEdge = indexLeadingTrailingEdge[0];
@@ -373,13 +377,15 @@ int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::
   return indexFlapPosition;
 }
 
-Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float dihedral) {
+Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float dihedral) {
   //derotate flap
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::copyPointCloud(*inputCloud, *cloudNoNormals);
+  Airfoil foilTmp;
+  foilTmp.setFoil(cloudNoNormals);
   //find position of the trailingEdge
-  std::vector<int> indexLeadingTrailingEdge = findLeadingTrailingEdge(cloudNoNormals);
+  std::vector<int> indexLeadingTrailingEdge = foilTmp.findLeadingTrailingEdge(cloudNoNormals);
   float trailingEdge =  cloudNoNormals->points[indexLeadingTrailingEdge[1]].y;
 
   int indexFlapPosition = getIndexFlapPosition(inputCloud, indexLeadingTrailingEdge);
@@ -413,8 +419,8 @@ Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float d
 
     //calculate approximal normal of the foil from the mid of the foil
     pcl::PointNormal searchPoint = inputCloud->points[indexFlapPosition];
-    Eigen::Vector3f normalFoil =  calculate_NormalFoil(inputCloud, searchPoint, indexLeadingTrailingEdge[1], 30, 10, 1);
-    Eigen::Vector3f normalFlap =  calculate_NormalFoil(inputCloud, searchPoint, indexLeadingTrailingEdge[1], 30, 10, -1);
+    Eigen::Vector3f normalFoil =  computeAverageNormalOfFoil(inputCloud, searchPoint, indexLeadingTrailingEdge[1], 30, 10, 1);
+    Eigen::Vector3f normalFlap =  computeAverageNormalOfFoil(inputCloud, searchPoint, indexLeadingTrailingEdge[1], 30, 10, -1);
     float angleFlap = pcl::getAngle3D(normalFoil, normalFlap);
 
     if(abs(angleFlap - M_PI/2) < (float) 15/180*M_PI)
@@ -468,7 +474,7 @@ Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float d
   // decide which rotation
 
     pcl::copyPointCloud(*flapRotated, *cloudNoNormals);
-    std::vector<int> indexMinMax = findLeadingTrailingEdge(cloudNoNormals);
+    std::vector<int> indexMinMax = foilTmp.findLeadingTrailingEdge(cloudNoNormals);
     //vector from flap position to trailing edge
     Eigen::Vector3f flapSurfaceVector;
     if(abs(flapRotated->points[pointIndexSearch[0]].y-flapRotated->points[indexMinMax[0]].y) > abs(flapRotated->points[pointIndexSearch[0]].y-flapRotated->points[indexMinMax[1]].y)) {
@@ -524,11 +530,11 @@ Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float d
   AirfoilParameter parameters;
   parameters.dihedral = dihedral;
   parameters.flapPosition = flapDistance;
-  Airfoil foil(cloudNoNormals, parameters);
-  return foil;
+  Airfoil extractedFoil(cloudNoNormals, parameters);
+  return extractedFoil;
 }
 
-void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge) {
+void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge, float distanceFromTrailingEdge) {
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
   pcl::PointXYZ trailingEdge = inputCloud->points[indexTrailingEdge];
@@ -547,18 +553,18 @@ void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge)
   pcl::getMinMax3D(*inputCloud, min, max);
   if(abs(trailingEdge.y-max.y) < abs(trailingEdge.y-min.y)) {
     pass.setFilterFieldName ("y");
-    pass.setFilterLimits (FLT_MIN, trailingEdge.y-0.5);
+    pass.setFilterLimits (FLT_MIN, trailingEdge.y-distanceFromTrailingEdge);
     pass.filter (*inputCloud);
   }
   else {
     pass.setFilterFieldName ("y");
-    pass.setFilterLimits (trailingEdge.y+0.5, FLT_MAX);
+    pass.setFilterLimits (trailingEdge.y+distanceFromTrailingEdge, FLT_MAX);
     pass.filter (*inputCloud);
   }
 
   pcl::io::savePCDFile("deletedTrailingEdge.txt", *inputCloud);
   foil.setFoil(inputCloud);
-  foil.setAnyAirfoilParameter("trailingEdgeWidth", trailingEdgeWidth);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::TrailingEdgeWidth, trailingEdgeWidth);
 }
 
 Eigen::Vector3f GeometryExtractor::computeAverageNormalOfFoil(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, pcl::PointNormal searchPoint, int indexTrailingEdge, int iterate, int n, int direction) {
@@ -620,4 +626,31 @@ pcl::PointXYZ GeometryExtractor::getOriginalPosition(pcl::PointCloud<pcl::PointN
     }
     pcl::PointXYZ originalPos(inputCloud->points[pointIdxSearch[0]].x, inputCloud->points[pointIdxSearch[0]].y, zPos);
     return originalPos;    
+}
+
+bool GeometryExtractor::getPolynomialCoeff(std::vector<double> xIn, std::vector<double> y, double coeff[], int degree) {
+    gsl_vector *x = gsl_vector_alloc(xIn.size());
+    gsl_vector *b = gsl_vector_alloc(xIn.size());
+    gsl_vector *work = gsl_vector_alloc(degree+1);
+    gsl_matrix *A = gsl_matrix_alloc(xIn.size(), degree+1);
+    gsl_matrix *T = gsl_matrix_alloc(degree+1, degree+1);
+    for(int i = 0; i < xIn.size(); i++) {
+        gsl_vector_set(b, i, y[i]);
+        for(int j = 0; j <= degree; j++) {
+            gsl_matrix_set(A, i, j, std::pow(xIn[i], j));
+        }
+    }
+    gsl_linalg_QR_decomp_r(A, T);
+    gsl_linalg_QR_lssolve_r(A, T, b, x, work);
+
+    for(int i = 0; i <= degree; i++) {
+        coeff[i] = gsl_vector_get(x, i);
+    }
+    gsl_vector_free(x);
+    gsl_vector_free(b);
+    gsl_vector_free(work);
+    gsl_matrix_free(A);
+    gsl_matrix_free(T);
+    
+    return 1;
 }

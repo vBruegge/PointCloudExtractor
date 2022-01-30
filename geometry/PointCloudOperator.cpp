@@ -3,16 +3,18 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/common/transforms.h>
 
 #include "PointCloudOperator.hpp"
 
-PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ> inputCloud, bool fuselageGreaterThanWing) {
+PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing) {
     cloudNoNormals = inputCloud;
-    aligningPointCloud(bool fuselageGreaterThanWing);
+    aligningPointCloud(fuselageGreaterThanWing);
     estimateNormals();
 }
 
-PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointNormal> inputCloud) {
+PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud) {
     cloud = inputCloud;
 }
 
@@ -20,9 +22,8 @@ PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreat
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud;
     if (pcl::io::loadPCDFile (filename, *inputCloud) == -1){
         std::cerr << "Please enter a valid cloud file" << std::endl;
-        return(-1);
     }
-    aligningPointCloud(bool fuselageGreaterThanWing);
+    aligningPointCloud(fuselageGreaterThanWing);
     estimateNormals();
 }
 
@@ -30,7 +31,7 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
 //moment of inertia estimating feature extractor definition
 
   std::cout << "Calculating OBB and AABB.." << std::endl;
-  pcl::MomentOfInertiaEstimation <pcl::PointT> feature_extractor;
+  pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
   feature_extractor.setInputCloud (cloudNoNormals);
   feature_extractor.compute ();
   std::cout << "Feature extraction computation complete" << std::endl;
@@ -106,7 +107,7 @@ void PointCloudOperator::estimateNormals() {
   // Compute the features
   ne.compute (*cloudNormals);
   pcl::PointCloud<pcl::PointNormal>::Ptr inputCloudWithNormals (new pcl::PointCloud<pcl::PointNormal>);
-  pcl::concatenateFields(*cloudTransformed, *cloudNormals, *inputCloudWithNormals);
+  pcl::concatenateFields(*cloudNoNormals, *cloudNormals, *inputCloudWithNormals);
 
 
   //pcl::io::savePCDFile("mlsNormals.txt", *inputCloudWithNormals);
@@ -116,10 +117,10 @@ void PointCloudOperator::estimateNormals() {
 }
 
 void PointCloudOperator::splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNormal>::Ptr wing,
-    pcl::PointCloud<pcl::PointNormal>::Ptr horizontalTail, pcl::PoitnCLoud<pcl::PointNormal>::Ptr verticalTail,
+    pcl::PointCloud<pcl::PointNormal>::Ptr horizontalTail, pcl::PointCloud<pcl::PointNormal>::Ptr verticalTail,
     float splittingDistance) {
 
-    pcl::PointCloud<pcl::PointNormal>::Ptr cloudShort(new pcl::PointCloud<PointNormal>::Ptr);
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloudShort(new pcl::PointCloud<pcl::PointNormal>);
     pcl::PassThrough<pcl::PointNormal> pass;
     pass.setInputCloud (cloud);
     pass.setFilterFieldName ("y");
@@ -132,7 +133,7 @@ void PointCloudOperator::splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNorma
 
     bool tail = false;
     if(abs(minOrg.x-maxOrg.x-1) > abs(minShort.x-maxShort.x)) {
-        pcl::copyPointCloud(*cloudShort, *verticaTail);
+        pcl::copyPointCloud(*cloudShort, *verticalTail);
         tail = true;
     }
     //split uav in half to speed up the calculation
@@ -151,7 +152,7 @@ void PointCloudOperator::splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNorma
     pass.filter (*cloudShort);
 
     if(tail == false) {
-        pcl::copyPointCloud(*cloudShort, *verticaTail);
+        pcl::copyPointCloud(*cloudShort, *verticalTail);
     }
 
     //split uav in half to speed up the calculation

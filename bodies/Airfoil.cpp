@@ -1,4 +1,5 @@
 #include <sstream>
+#include <iomanip>
 
 #include "Airfoil.hpp"
 
@@ -20,31 +21,31 @@ AirfoilParameter Airfoil::getAirfoilParameter() {
     return parameters;
 }
 
-void Airfoil::setAnyAirfoilParameter(std::string& parameter, float value) {
-    switch (parameter)
+void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float value) {
+    switch (type)
     {
-    case "dihedral":
+    case AirfoilParameter::Dihedral:
         parameters.dihedral = value;
         break;
-    case "twist":
+    case AirfoilParameter::Twist:
         parameters.twist = value;
         break;
-    case "cuttingDistance":
+    case AirfoilParameter::CuttingDistance:
         parameters.cuttingDistance = value;
         break;
-    case "chordLength":
+    case AirfoilParameter::ChordLength:
         parameters.chordLength = value;
         break;
-    case "flapPosition":
+    case AirfoilParameter::FlapPosition:
         parameters.flapPosition = value;
         break;
-    case "offset":
+    case AirfoilParameter::Offset:
         parameters.offset = value;
         break;
-    case "sweep":
+    case AirfoilParameter::Sweep:
         parameters.sweep = value;
         break;
-    case "trailingEdgeWidth":
+    case AirfoilParameter::TrailingEdgeWidth:
         parameters.trailingEdgeWidth = value;
         break;
     default:
@@ -52,7 +53,7 @@ void Airfoil::setAnyAirfoilParameter(std::string& parameter, float value) {
     }
 }
 
-void setAllAirfoilParameter(AirfoilParameter& parameters_) {
+void Airfoil::setAllAirfoilParameter(AirfoilParameter& parameters_) {
     parameters = parameters_;
 }
 
@@ -65,18 +66,18 @@ void Airfoil::computeChordLength(){
 
 void Airfoil::computeRotatedFlapPosition() {
   //returns flap position normalized
-  std:vector<int> minMax = findingLeadingTrailingEdge(foil);
+  std::vector<int> indexMinMax = findLeadingTrailingEdge(foil);
   pcl::PointXYZ minPt, maxPt;
-  minPt = foil.getFoil()->points[indexMinMax[0]];
-  maxPt = foil.getFoil()->points[indexMinMax[1]];
+  minPt = foil->points[indexMinMax[0]];
+  maxPt = foil->points[indexMinMax[1]];
 
   float maxDis = sqrt(pow(minPt.y-maxPt.y, 2)+pow(minPt.z-maxPt.z, 2)+pow(minPt.x-maxPt.x,2));
 
-  AirfoilParameter parameters = foil.getAirfoilParameter();
+  AirfoilParameter parameters = getAirfoilParameter();
   float flap = maxDis/2 + parameters.flapPosition/cos(parameters.twist);
 
   float flapPos = flap / maxDis;
-  foil.setAnyAirfoilParameter("flapPosition", flapPos);
+  setAnyAirfoilParameter(AirfoilParameter::parameterType::FlapPosition, flapPos);
 }
 
 float Airfoil::computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float offsetFirstPoint) {
@@ -86,7 +87,7 @@ float Airfoil::computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr
 }
 
 void Airfoil::setName(std::string& sectionType) {
-    stringstream ss;
+    std::stringstream ss;
     ss << std::setprecision(2);
     ss << "../Results/" << sectionType << parameters.cuttingDistance << "mm.dat";
 

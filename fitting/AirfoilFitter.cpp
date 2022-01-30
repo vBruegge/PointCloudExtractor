@@ -5,7 +5,7 @@
 #include <gsl/gsl_linalg.h>
 
 #include <pcl/filters/passthrough.h>
-
+#include "AirfoilFitter.hpp"
 #include "Airfoil.hpp"
 
 bool sortIncrease(const Eigen::Vector2d &a, const Eigen::Vector2d &b) {
@@ -14,6 +14,7 @@ bool sortIncrease(const Eigen::Vector2d &a, const Eigen::Vector2d &b) {
 
 AirfoilFitter::AirfoilFitter(Airfoil& foil) {
     //copy y- and z-distance in array
+    std::vector<Eigen::Vector2d> points;
     points.resize((int) foil.getFoil()->size());
     for(int i = 0; i < foil.getFoil()->size(); i++) {
       points[i] = Eigen::Vector2d(foil.getFoil()->points[i].y, foil.getFoil() -> points[i].z);
@@ -21,16 +22,16 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
     AirfoilParameter params = foil.getAirfoilParameter();
     io.writingPointCloud(params.name + "_scan.txt", points);
     
-    computeCompareValues();
+    computeCompareValues(foil);
     splitAirfoil(points);
 
     name = params.name;
     trailingEdgeWidth = params.trailingEdgeWidth;
 }
 
-void AirfoilFitter::computeCompareValues() {
+void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     //calculate approximative skeleton line of the foil
-    std::vector<int> indexMinMax = findLeadingTrailingEdge(foil.getFoil());
+    std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil());
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*foil.getFoil(), minPt, maxPt);
     float sectionDisX = 15;
@@ -71,10 +72,13 @@ void AirfoilFitter::splitAirfoil(std::vector<Eigen::Vector2d> points) {
         // X = compare[j] + point[i].x * (compare[j+1]-compare[j])
         Eigen::Vector2d gradient = (compare[compareIndex]-compare[compareIndex-1]);
         float ycompare = compare[compareIndex][1]+(points[i][0]-compare[compareIndex][0])/gradient[0]*gradient[1];
+        std::vector<Eigen::Vector2d> tmpUpper, tmpLower;
         if(points[i][1]> ycompare)
-            upper.push_back(points[i]);
+            tmpUpper.push_back(points[i]);
         else
-            lower.push_back(points[i]);
+            tmpLower.push_back(points[i]);
+        lower = tmpLower;
+        upper = tmpUpper;
     }
 }
 
@@ -85,7 +89,7 @@ void AirfoilFitter::sortUpperAndLowerHalves() {
 }
 
 void AirfoilFitter::orientFoil () {
-    bool upsideDown = check_upside_down(compare);
+    bool upsideDown = checkIfFoilUpsideDown();
     if(upsideDown == true) {
         //flip foil at y-Axis
         for(int i = 0; i < upper.size(); i++)
@@ -95,9 +99,9 @@ void AirfoilFitter::orientFoil () {
     }
     bool posLeadingEdge;
     if(upsideDown == true)
-        posLeadingEdge = check_position_leading_edge(lower);
+        posLeadingEdge = checkPositionLeadingEdge(lower);
     else
-        posLeadingEdge = check_position_leading_edge(upper);
+        posLeadingEdge = checkPositionLeadingEdge(upper);
     //flip foil at x-Axis
     if(posLeadingEdge == false) {
         for(int i = 0; i < upper.size(); i++)
@@ -160,12 +164,12 @@ std::vector<Eigen::Vector2d> AirfoilFitter::splineInterpolation(std::vector<Eige
     if(size < 800)
         size = 800; 
     
-    double xi[size], yi_spline[size];
+    double xi[size], yi[size];
 
     xi[0] = -1;
-    yi_spline[0]=gsl_spline_eval(spline, xi[0], acc);
+    yi[0]=gsl_spline_eval(spline, xi[0], acc);
     xi[size-1] = 1;
-    yi_spline[size-1]=gsl_spline_eval(spline, xi[size-1], acc);
+    yi[size-1]=gsl_spline_eval(spline, xi[size-1], acc);
     for (int i = 1; i < size-1; ++i)
     {
         //node calculation with chebyshev nodes for stability
@@ -200,7 +204,7 @@ double AirfoilFitter::getBernsteinPolynomialValue(double xDc, double coeff[], in
     return yDc + trailingEdgeWidthNormed*xDc;
 }
 
-std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points) {
+std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points, float trailingEdgeWidth) {
     //fit gsl spline on curve
     int size = points.size();
     int min = 0;
@@ -274,13 +278,15 @@ void AirfoilFitter::initiateFitting(std::string type) {
     sortUpperAndLowerHalves();
     orientFoil();
 
-    if(type = "bernsteinPolynomial") {
-        std::vector<Eigen::Vector2d> newUpper = bernsteinPolynomialFit(upper, trailingEdgeWidth);
-        std::vector<Eigen::Vector2d> newLower = bernsteinPolynomialFit(lower, -trailingEdgeWidth);
+    std::vector<Eigen::Vector2d> newUpper;
+    std::vector<Eigen::Vector2d> newLower;
+    if(type == "bernsteinPolynomial") {
+        newUpper = bernsteinPolynomialFit(upper, trailingEdgeWidth);
+        newLower = bernsteinPolynomialFit(lower, -trailingEdgeWidth);
     }
-    else if(type = "spline") {
-        std::vector<Eigen::Vector2d> newUpper = bernsteinPolynomialFit(upper);
-        std::vector<Eigen::Vector2d> newUpper = bernsteinPolynomialFit(lower);
+    else if(type == "spline") {
+        newUpper = splineInterpolation(upper);
+        newUpper = splineInterpolation(lower);
     }
 
     std::vector<Eigen::Vector2d> foil;

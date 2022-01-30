@@ -1,6 +1,10 @@
+#ifndef GEOMETRYEXTRACTOR_H
+#define GEOMETRYEXTRACTOR_H
+
 #include <pcl/common/common_headers.h>
 #include <pcl/point_cloud.h>
 #include <eigen3/Eigen/Core>
+#include <vector>
 
 #include "Airfoil.hpp"
 #include "Fuselage.hpp"
@@ -14,7 +18,7 @@ public:
     Fuselage sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float cuttingDistance);
     //genereates a section in a distance of the y-Axis
 
-    Airfoil sectioningCloudZ(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded);
+    Airfoil sectioningCloudZ(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded);
     //generates a section in a distance of the z-Axis
 
     void derotateSection(Airfoil& foil);
@@ -33,4 +37,8 @@ private:
 
     Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float dihedral);
 
+    bool getPolynomialCoeff(std::vector<double> x, std::vector<double> y, double coeff[], int degree);
+
 };
+
+#endif

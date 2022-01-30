@@ -1,5 +1,9 @@
+#ifndef POINTCLOUDOPERATOR_H
+#define POINTCLOUDOPERATOR_H
+
 #include <pcl/common/common_headers.h>
 #include <pcl/point_cloud.h>
+#include <pcl/ModelCoefficients.h>
 
 #include <string>
 
@@ -18,4 +22,6 @@ private:
 
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals;
-}
+};
+
+#endif

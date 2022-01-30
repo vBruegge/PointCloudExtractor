@@ -1,3 +1,6 @@
+#ifndef FUSELAGE_H
+#define FUSELAGE_H
+
 #include <pcl/common/common_headers.h>
 #include <pcl/point_cloud.h>
 
@@ -12,11 +15,13 @@ public:
     double xM;
     double yM;
     double epsilon = 1.0;
+    enum parameterType{CuttingDistance, DisX, DisY, XM, YM, Epsilon};
 };
 
 class Fuselage {
 public:
     Fuselage(pcl::PointCloud<pcl::PointXYZ>::Ptr section);
+    Fuselage() = default;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr getFuselage();
 
@@ -24,7 +29,7 @@ public:
 
     FuselageParameter getFuselageParameter();
 
-    void setAnyFuselageParameter(std::string parameter, float value);
+    void setAnyFuselageParameter(FuselageParameter::parameterType type, float value);
 
     void setAllFuselageParameter(FuselageParameter parameters_);
 
@@ -33,4 +38,6 @@ public:
 private:
     pcl::PointCloud<pcl::PointXYZ>::Ptr fuselage;
     FuselageParameter parameters;
-}
+};
+
+#endif

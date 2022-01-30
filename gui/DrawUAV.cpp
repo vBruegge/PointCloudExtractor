@@ -2,6 +2,8 @@
 
 #include <pcl/filters/passthrough.h>
 #include <pcl/common/geometry.h>
+#include <stdio.h>
+#include <fstream>
 
 //initialize drawing object
 UAV::UAV(int numPoints, int width, int height) {
