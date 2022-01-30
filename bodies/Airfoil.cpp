@@ -1,9 +1,11 @@
+#include <sstream>
+
 #include "Airfoil.hpp"
 
 Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_) {
     foil = foil_;
     parameters = parameters_;
-    computeChordLength();
+    computeChordLength();  
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr Airfoil::getFoil() {
@@ -61,8 +63,9 @@ void Airfoil::computeChordLength(){
   parameters.chordLength = std::abs(minPt.y-maxPt.y);
 }
 
-void Airfoil::computeRotatedFlapPosition(Airfoil& foil, std::vector<int>& indexMinMax) {
+void Airfoil::computeRotatedFlapPosition() {
   //returns flap position normalized
+  std:vector<int> minMax = findingLeadingTrailingEdge(foil);
   pcl::PointXYZ minPt, maxPt;
   minPt = foil.getFoil()->points[indexMinMax[0]];
   maxPt = foil.getFoil()->points[indexMinMax[1]];
@@ -80,4 +83,21 @@ float Airfoil::computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr
   int indexLeadingEdge = findLeadingTrailingEdge(inputCloud)[0];
   pcl::PointXYZ leadingEdge = inputCloud->points[indexLeadingEdge];
   return abs(offsetFirstPoint-leadingEdge.y);
+}
+
+void Airfoil::setName(std::string& sectionType) {
+    stringstream ss;
+    ss << std::setprecision(2);
+    ss << "../Results/" << sectionType << parameters.cuttingDistance << "mm.dat";
+
+    parameters.name = ss.str();
+}
+
+void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection) {
+
+    parameters.offset = computeOffsetFromFirstSection(foil, offsetFirstPoint); //offset in mm
+    parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - firstSection));
+    
+    setName(sectionType);
+    computeRotatedFlapPosition();
 }

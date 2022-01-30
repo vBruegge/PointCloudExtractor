@@ -19,7 +19,7 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
       points[i] = Eigen::Vector2d(foil.getFoil()->points[i].y, foil.getFoil() -> points[i].z);
     }
     AirfoilParameter params = foil.getAirfoilParameter();
-    writingPointCloud(params.name + "_scan.txt", points);
+    io.writingPointCloud(params.name + "_scan.txt", points);
     
     computeCompareValues();
     splitAirfoil(points);
@@ -287,7 +287,7 @@ void AirfoilFitter::initiateFitting(std::string type) {
     foil.insert(foil.end(), newUpper.rbegin(), newUpper.rend());
     foil.insert(foil.end(), newLower.begin(), newLower.end());
 
-    writingPointCloud("../Results/" + name, foil);
+    io.writingPointCloud("../Results/" + name, foil);
     /*writingPointCloud("../Results/" + name + "_upper.txt", upper);
     writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
     writingPointCloud("../Results/" + name + "_compare.txt", compare);

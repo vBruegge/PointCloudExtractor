@@ -33,16 +33,20 @@ public:
 
     std::vector<int> findLeadingTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
 
-    float computeRotatedFlapPosition(Airfoil& foil, std::vector<int>& indexMinMax);
-
-    float computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float offsetFirstPoint);
-
+    void generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection);
+    
 private:
     int findTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
 
     void computeChordLength();
 
     void computeFlapPosition(Airfoil& foil, std::vector<int> indexMinMax);
+
+    void setName(std::string& sectionType);
+
+    float computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float offsetFirstPoint);
+
+    void computeRotatedFlapPosition();
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr foil;
     AirfoilParameter parameters;

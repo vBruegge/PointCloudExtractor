@@ -1,4 +1,5 @@
 #include "Fuselage.hpp"
+#include "IOHandler.hpp"
 
 class FuselageFitter {
 public:
@@ -11,9 +12,8 @@ public:
 
     void superellipseFit();
 
-    FuselageParameter getFuselageParameter();
-
 private:
     Fuselage section;
+    IOHandler io;
 
 };

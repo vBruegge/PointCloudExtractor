@@ -2,32 +2,36 @@
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/passthrough.h>
 
 #include "PointCloudOperator.hpp"
 
-PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ> inputCloud) {
-    aligningPointCloud(inputCloud);
-    estimateNormals(inputCloud);
+PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ> inputCloud, bool fuselageGreaterThanWing) {
+    cloudNoNormals = inputCloud;
+    aligningPointCloud(bool fuselageGreaterThanWing);
+    estimateNormals();
 }
+
 PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointNormal> inputCloud) {
-    aligningPointCloud(inputCloud);
-    estimateNormals(inputCloud);
+    cloud = inputCloud;
 }
-PointCloudOperator::PointCloudOperator(std::string filename) {
-    if (pcl::io::loadPCDFile (filename, *cloud) == -1){
+
+PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud;
+    if (pcl::io::loadPCDFile (filename, *inputCloud) == -1){
         std::cerr << "Please enter a valid cloud file" << std::endl;
         return(-1);
     }
-    aligningPointCloud(inputCloud);
-    estimateNormals(inputCloud);
+    aligningPointCloud(bool fuselageGreaterThanWing);
+    estimateNormals();
 }
 
-void aligningPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing) {
+void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
 //moment of inertia estimating feature extractor definition
 
   std::cout << "Calculating OBB and AABB.." << std::endl;
-  pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
-  feature_extractor.setInputCloud (cloud);
+  pcl::MomentOfInertiaEstimation <pcl::PointT> feature_extractor;
+  feature_extractor.setInputCloud (cloudNoNormals);
   feature_extractor.compute ();
   std::cout << "Feature extraction computation complete" << std::endl;
 
@@ -60,11 +64,12 @@ void aligningPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fus
   Eigen::Vector3f transformation_vector (position_OBB.x, position_OBB.y, position_OBB.z);
   Eigen::Quaternionf rotation_quaternion (rotational_matrix_OBB);
 
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTransformed;
   Eigen::Affine3f transform = Eigen::Affine3f::Identity();
   transform.translation() << transformation_vector;
   transform.rotate (rotation_quaternion);
   Eigen::Affine3f inverse_transform = transform.inverse();
-  pcl::transformPointCloud (*cloud, *cloudTransformed, inverse_transform);
+  pcl::transformPointCloud (*cloudNoNormals, *cloudTransformed, inverse_transform);
 
   if(fuselageGreaterThanWing == 1) {
     const Eigen::Vector3f   translationVector (0,0,0);
@@ -75,5 +80,93 @@ void aligningPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fus
 
     pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformationSection);
   }
+  cloudNoNormals = cloudTransformed;
 }
-    void estimateNormals();
+
+void PointCloudOperator::estimateNormals() {
+    std::cout << "Calculate normals of point cloud...\n";
+
+  //process normals
+
+  // Create the normal estimation class, and pass the input dataset to it
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+  ne.setInputCloud (cloudNoNormals);
+
+  // Create an empty kdtree representation, and pass it to the normal estimation object.
+  // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+  ne.setSearchMethod (tree);
+
+  // Output datasets
+  pcl::PointCloud<pcl::Normal>::Ptr cloudNormals (new pcl::PointCloud<pcl::Normal>);
+
+  // Use all neighbors in a sphere of radius 2.5mm
+  ne.setRadiusSearch (2.5);
+
+  // Compute the features
+  ne.compute (*cloudNormals);
+  pcl::PointCloud<pcl::PointNormal>::Ptr inputCloudWithNormals (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::concatenateFields(*cloudTransformed, *cloudNormals, *inputCloudWithNormals);
+
+
+  //pcl::io::savePCDFile("mlsNormals.txt", *inputCloudWithNormals);
+  std::cout << "Normal calculation complete...\n";
+
+  cloud = inputCloudWithNormals;
+}
+
+void PointCloudOperator::splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNormal>::Ptr wing,
+    pcl::PointCloud<pcl::PointNormal>::Ptr horizontalTail, pcl::PoitnCLoud<pcl::PointNormal>::Ptr verticalTail,
+    float splittingDistance) {
+
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloudShort(new pcl::PointCloud<PointNormal>::Ptr);
+    pcl::PassThrough<pcl::PointNormal> pass;
+    pass.setInputCloud (cloud);
+    pass.setFilterFieldName ("y");
+    pass.setFilterLimits (FLT_MIN, splittingDistance);
+    pass.filter (*cloudShort);
+    
+    pcl::PointNormal minOrg, maxOrg, minShort, maxShort;
+    pcl::getMinMax3D(*cloud, minOrg, maxOrg);
+    pcl::getMinMax3D(*cloudShort, minShort, maxShort);
+
+    bool tail = false;
+    if(abs(minOrg.x-maxOrg.x-1) > abs(minShort.x-maxShort.x)) {
+        pcl::copyPointCloud(*cloudShort, *verticaTail);
+        tail = true;
+    }
+    //split uav in half to speed up the calculation
+    pass.setInputCloud (cloudShort);
+    pass.setFilterFieldName ("x");
+    pass.setFilterLimits (0.0, FLT_MAX);
+    if(tail == true)
+        pass.filter (*horizontalTail);
+    else
+        pass.filter(*wing);
+    
+
+    pass.setInputCloud (cloud);
+    pass.setFilterFieldName ("y");
+    pass.setFilterLimits (splittingDistance, FLT_MAX);
+    pass.filter (*cloudShort);
+
+    if(tail == false) {
+        pcl::copyPointCloud(*cloudShort, *verticaTail);
+    }
+
+    //split uav in half to speed up the calculation
+    pass.setInputCloud (cloudShort);
+    pass.setFilterFieldName ("x");
+    pass.setFilterLimits (0.0, FLT_MAX);
+    if(tail == false)
+        pass.filter (*horizontalTail);
+    else
+        pass.filter(*wing);
+}
+
+pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudOperator::getPointCloudWithNormals() {
+    return cloud;
+}
+pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudOperator::getPointCloudWithoutNormals() {
+    return cloudNoNormals;
+}

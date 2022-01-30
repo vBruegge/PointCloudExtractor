@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Airfoil.hpp"
+#include "IOHandler.hpp"
 
 class AirfoilFitter {
 public:
@@ -33,5 +34,5 @@ private:
     std::vector<Eigen::Vector2d> compare;
     std::string name;
     float trailingEdgeWidth;
-
+    IOHandler io;
 }

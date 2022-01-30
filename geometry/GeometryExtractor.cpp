@@ -14,7 +14,7 @@
 #include <thread>
 #include "Writer.hpp"
 
-Airfoil GeometryExtractor::section_cloud_x(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded){
+Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded){
   // function generates a plane section at a defined distance from origin. It uses the normal vectors of the mesh to create a plane.
 
   //filter small section near the cuttingDistance for surface normal calculation
@@ -116,17 +116,18 @@ Airfoil GeometryExtractor::section_cloud_x(pcl::PointCloud<pcl::PointNormal>::Pt
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::copyPointCloud(*cloudPassThrough, *cloudNoNormals);
     AirfoilParameter parameters;
-    parameters.dihedral = abs(angleCuttingPlane);
+    parameters.dihedral = abs(angleCuttingPlane)*180/M_PI;
     parameters.flapPosition = 0.0;
     foil = Airfoil(cloudNoNormals, parameters);
   }
+  foil.setAllAirfoilParameter("cuttingDistance", cuttingDistance);
 
   //pcl::io::savePCDFile("foil_new.txt", *foil->section);
   return foil;
 
 }
 
-Fuselage GeometryExtractor::section_cloud_y(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float cuttingDistance){
+Fuselage GeometryExtractor::sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float cuttingDistance){
   //
   //This function creates a section at a defined distance from the origin and a defined angle
   //
@@ -165,11 +166,12 @@ Fuselage GeometryExtractor::section_cloud_y(pcl::PointCloud<pcl::PointXYZ>::Ptr 
   Fuselage fuselageSection;
   fuselageSection.setFuselage(section);
   fuselageSection.computeFuselageParameter();
+  fuselageSection.setAnyFuselageParameter("cuttingDistance", cuttingDistance);
 
   return fuselageSection;
 }
 
-Airfoil GeometryExtractor::section_cloud_z(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded){
+Airfoil GeometryExtractor::sectioningCloudZ(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded){
   //
   //This function creates a section at a defined distance from the origin and a defined angle in z-direction
   //
@@ -228,11 +230,12 @@ Airfoil GeometryExtractor::section_cloud_z(pcl::PointCloud<pcl::PointNormal>::Pt
     parameters.flapPosition = 0.0;
     foil = Airfoil(cloudNoNormals, parameters);
   }
+  foil.setAllAirfoilParameter("cuttingDistance", cuttingDistance);
   //pcl::io::savePCDFile("foil_new.txt", *flap->section);
   return foil;
 }
 
-void GeometryExtractor::derotate_section(Airfoil& foil){
+void GeometryExtractor::derotateSection(Airfoil& foil){
 //calculates the twist of an airfoil to the xy-plane
 
   float rotationAngle;
@@ -273,16 +276,15 @@ void GeometryExtractor::derotate_section(Airfoil& foil){
   pcl::getMinMax3D(*rotatedInverse, minRI, maxRI);
   if(maxR.z-minR.z < maxRI.z - minRI.z) {
     foil.setFoil(rotated);
-    foil.setAnyAirfoilParameter("twist", rotationAngle);
   }
   else
   {
     foil.setFoil(rotatedInverse);
-    foil.setAnyAirfoilParameter("twist", rotationAngle);
   }
+  foil.setAnyAirfoilParameter("twist", rotationAngle*180.0/M_PI);
 }
 
-void GeometryExtractor::translate_section(Airfoil& foil){
+void GeometryExtractor::translateSection(Airfoil& foil){
   //translates center of the Point Cloud to Point Zero
 
   std::vector<int> indexMinMax = findLeadingTrailingEdge(foil.getFoil());
@@ -317,7 +319,7 @@ int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::
   //pcl::io::savePCDFile("foil.txt", *inputCloud);
 
   //calculate approximal normal of the foil from the mid of the foil
-  Eigen::Vector3f normalFoil =  calculate_NormalFoil(inputCloud, searchPoint, indexTrailingEdge, 30, 10, -1);
+  Eigen::Vector3f normalFoil =  computeAverageNormalOfFoil(inputCloud, searchPoint, indexTrailingEdge, 30, 10, -1);
 
 //calculate normal of the flap and its position with nearest neighbor search
   //starting point: 9/10 distance between leading edge and trailing edge
@@ -371,7 +373,7 @@ int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::
   return indexFlapPosition;
 }
 
-Airfoil derotate_flap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float dihedral) {
+Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float dihedral) {
   //derotate flap
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals (new pcl::PointCloud<pcl::PointXYZ>);
@@ -526,8 +528,9 @@ Airfoil derotate_flap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float 
   return foil;
 }
 
-float deleteTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, int indexTrailingEdge) {
+void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge) {
 
+  pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
   pcl::PointXYZ trailingEdge = inputCloud->points[indexTrailingEdge];
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPassThrough (new pcl::PointCloud<pcl::PointXYZ>);
@@ -554,7 +557,8 @@ float deleteTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, int ind
   }
 
   pcl::io::savePCDFile("deletedTrailingEdge.txt", *inputCloud);
-  return trailingEdgeWidth;  
+  foil.setFoil(inputCloud);
+  foil.setAnyAirfoilParameter("trailingEdgeWidth", trailingEdgeWidth);
 }
 
 Eigen::Vector3f GeometryExtractor::computeAverageNormalOfFoil(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, pcl::PointNormal searchPoint, int indexTrailingEdge, int iterate, int n, int direction) {

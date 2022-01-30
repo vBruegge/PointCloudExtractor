@@ -5,14 +5,17 @@
 
 class PointCloudOperator {
 public:
-    PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
+    PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing);
     PointCloudOperator(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud);
-    PointCloudOperator(std::string filename);
+    PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing);
+    void splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNormal>::Ptr wing, pcl::PointCloud<pcl::PointNormal>::Ptr horizontalTail, 
+        pcl::PointCloud<pcl::PointNormal>::Ptr verticalTail, float splittingDistance);
+    pcl::PointCloud<pcl::PointNormal>::Ptr getPointCloudWithNormals();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr getPointCloudWithoutNormals();
 private:
-    void estimateNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
-    void estimateNormals(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud);
-    void aligningPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing);
-    void aligningPointCloud(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, bool fuselageGreaterThanWing);
+    void estimateNormals();
+    void aligningPointCloud(bool fuselageGreaterThanWing);
 
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals;
 }

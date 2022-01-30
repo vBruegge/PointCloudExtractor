@@ -20,7 +20,7 @@ void FuselageFitter::circularFit() {
         double yi = params.yM + radius * std::sin(degree);
         newPoints[i] = Eigen::Vector2d(xi, yi);
     }
-    writingPointCloud(params.name, newPoints);
+    io.writingPointCloud(params.name, newPoints);
     params.disX = params.disY = radius;
     params.epsilon = 1.0;
     section.setAllFuselageParameter(params);
@@ -36,7 +36,7 @@ void FuselageFitter::ellipseFit() {
         double yi = params.yM + params.disY * std::sin(degree);
         newPoints[i] = Eigen::Vector2d(xi, yi);
     }
-    writingPointCloud(name, newPoints);
+    io.writingPointCloud(name, newPoints);
     params.epsilon = 1.0;
     section.setAllFuselageParameter(params);
 }
@@ -86,6 +86,6 @@ void FuselageFitter::superellipseFit() {
         newPoints[180+i] = Eigen::Vector2d(-xi, yiNeg);
         newPoints[360-i-1] = Eigen::Vector2d(xi, yiNeg);
     }
-    writingPointCloud(params.name, newPoints);
+    io.writingPointCloud(params.name, newPoints);
     section.setAllFuselageParameter(params);    
 }
