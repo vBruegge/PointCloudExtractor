@@ -1,6 +1,9 @@
 #include <sstream>
 #include <iomanip>
 
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/filters/passthrough.h>
+
 #include "Airfoil.hpp"
 
 Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_) {
@@ -101,4 +104,67 @@ void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, float of
     
     setName(sectionType);
     computeRotatedFlapPosition();
+}
+
+std::vector<int> Airfoil::findLeadingTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
+    //find the index of the min and max of the input cloud
+    int indexTrailingEdge = findTrailingEdge(inputCloud);
+    std::vector<int> indexLeadingTrailingEdge(2);
+    indexLeadingTrailingEdge[1] = indexTrailingEdge;
+    
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud (inputCloud);
+
+    int n = inputCloud->size();
+    std::vector<int> pointIndexSearch(n);
+    std::vector<float> pointDistanceSearch(n);
+    kdtree.nearestKSearch (inputCloud->points[indexTrailingEdge], n, pointIndexSearch, pointDistanceSearch);
+    
+    indexLeadingTrailingEdge[0] = pointIndexSearch[n-1];
+    
+    return indexLeadingTrailingEdge;
+}
+
+int Airfoil::findTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
+  //returns position of the trailing edge
+  //comparison of the z distance at the front and the back -> smaller distance: trailing edge
+  pcl::PointXYZ center(0.0, 0.0, 0.0);
+  for (std::size_t i = 0; i < inputCloud->size(); i++) {
+    center.x += inputCloud->points[i].x;
+    center.y += inputCloud->points[i].y;
+    center.z += inputCloud->points[i].z;
+  }
+  center.x /= inputCloud->size();
+  center.y /= inputCloud->size();
+  center.z /= inputCloud->size();
+  //std::cout << center.x << " "  << center.y << " " << center.z << std::endl;
+  
+
+  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+  kdtree.setInputCloud (inputCloud);
+
+  int n = inputCloud->size();
+  std::vector<int> pointIndexSearch(n);
+  std::vector<float> pointDistanceSearch(n);
+  kdtree.nearestKSearch (center, n, pointIndexSearch, pointDistanceSearch);
+  
+  int indexTrailingEdge = pointIndexSearch[n-1];
+  pcl::PointXYZ trailingEdgeTmp = inputCloud->points[indexTrailingEdge];
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPassThrough (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud (inputCloud);
+  pass.setFilterFieldName ("y");
+  pass.setFilterLimits (trailingEdgeTmp.y-0.5, trailingEdgeTmp.y+0.5);
+  pass.filter (*cloudPassThrough);
+
+  pcl::PointXYZ min, max;
+  pcl::getMinMax3D(*cloudPassThrough, min, max);
+
+  pcl::PointXYZ centerTrailingEdge = pcl::PointXYZ(trailingEdgeTmp.x, trailingEdgeTmp.y, (min.z+max.z)/2);
+  kdtree.nearestKSearch (centerTrailingEdge, 1, pointIndexSearch, pointDistanceSearch);
+  indexTrailingEdge = pointIndexSearch[0];
+
+  //std::cout << inputCloud->points[indexTrailingEdge].x << " "  << inputCloud->points[indexTrailingEdge].y << " " << inputCloud->points[indexTrailingEdge].z << std::endl;
+  return indexTrailingEdge;
 }
