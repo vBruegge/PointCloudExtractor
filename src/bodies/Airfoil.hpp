@@ -21,9 +21,21 @@ public:
     enum parameterType {CuttingDistance, ChordLength, Dihedral, Twist, FlapPosition, Offset, Sweep, TrailingEdgeWidth};
 };
 
+class MorphingWingParameter {
+public:
+    float cuttingDistance;
+    int indexFirstReference;
+    int indexSecondReference;
+    float scale;
+    float rotationAngle;
+    enum parameterType {CuttingDistance, IndexFirstReference, IndexSecondReference, Scale, RotationAngle};
+};
+
 class Airfoil {
 public:
     Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_);
+
+    Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, MorphingWingParameter& parameters_);
 
     Airfoil() = default;
 
@@ -33,9 +45,15 @@ public:
 
     AirfoilParameter getAirfoilParameter();
 
+    MorphingWingParameter getMorphingWingParameter();
+
     void setAnyAirfoilParameter(AirfoilParameter::parameterType type, float value);
 
+    void setAnyMorphingWingParameter(MorphingWingParameter::parameterType type, float value);
+
     void setAllAirfoilParameter(AirfoilParameter& parameters_);
+
+    void setAllMorphingWingParameter(MorphingWingParameter& parameter_);
 
     std::vector<int> findLeadingTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
 
@@ -55,7 +73,8 @@ private:
     void computeRotatedFlapPosition();
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr foil;
-    AirfoilParameter parameters;
+    AirfoilParameter airfoilParameters;
+    MorphingWingParameter morphingWingParameters;
 };
 
 #endif

@@ -8,7 +8,13 @@
 
 Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_) {
     foil = foil_;
-    parameters = parameters_;
+    airfoilParameters = parameters_;
+    computeChordLength();  
+}
+
+Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, MorphingWingParameter& parameters_) {
+    foil = foil_;
+    morphingWingParameters = parameters_;
     computeChordLength();  
 }
 
@@ -21,35 +27,62 @@ void Airfoil::setFoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_) {
 }
 
 AirfoilParameter Airfoil::getAirfoilParameter() {
-    return parameters;
+    return airfoilParameters;
+}
+
+MorphingWingParameter Airfoil::getMorphingWingParameter() {
+    return morphingWingParameters;
 }
 
 void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float value) {
     switch (type)
     {
     case AirfoilParameter::Dihedral:
-        parameters.dihedral = value;
+        airfoilParameters.dihedral = value;
         break;
     case AirfoilParameter::Twist:
-        parameters.twist = value;
+        airfoilParameters.twist = value;
         break;
     case AirfoilParameter::CuttingDistance:
-        parameters.cuttingDistance = value;
+        airfoilParameters.cuttingDistance = value;
         break;
     case AirfoilParameter::ChordLength:
-        parameters.chordLength = value;
+        airfoilParameters.chordLength = value;
         break;
     case AirfoilParameter::FlapPosition:
-        parameters.flapPosition = value;
+        airfoilParameters.flapPosition = value;
         break;
     case AirfoilParameter::Offset:
-        parameters.offset = value;
+        airfoilParameters.offset = value;
         break;
     case AirfoilParameter::Sweep:
-        parameters.sweep = value;
+        airfoilParameters.sweep = value;
         break;
     case AirfoilParameter::TrailingEdgeWidth:
-        parameters.trailingEdgeWidth = value;
+        airfoilParameters.trailingEdgeWidth = value;
+        break;
+    default:
+        break;
+    }
+}
+
+void Airfoil::setAnyMorphingWingParameter(MorphingWingParameter::parameterType type, float value) {
+    switch (type)
+    {
+    case MorphingWingParameter::parameterType::CuttingDistance:
+        morphingWingParameters.cuttingDistance = value;
+        break;
+    case MorphingWingParameter::parameterType::IndexFirstReference:
+        morphingWingParameters.indexFirstReference = (int)value;
+        break;
+    case MorphingWingParameter::parameterType::IndexSecondReference:
+        morphingWingParameters.indexSecondReference = (int)value;
+        break;
+    case MorphingWingParameter::parameterType::Scale:
+        morphingWingParameters.scale = value;
+        break;
+    case MorphingWingParameter::parameterType::RotationAngle:
+        morphingWingParameters.rotationAngle = value;
         break;
     default:
         break;
@@ -57,14 +90,18 @@ void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float
 }
 
 void Airfoil::setAllAirfoilParameter(AirfoilParameter& parameters_) {
-    parameters = parameters_;
+    airfoilParameters = parameters_;
+}
+
+void Airfoil::setAllMorphingWingParameter(MorphingWingParameter& parameters_) {
+    morphingWingParameters = parameters_;
 }
 
 void Airfoil::computeChordLength(){
   pcl::PointXYZ minPt, maxPt;
   pcl::getMinMax3D (*foil, minPt, maxPt);
 
-  parameters.chordLength = std::abs(minPt.y-maxPt.y);
+  airfoilParameters.chordLength = std::abs(minPt.y-maxPt.y);
 }
 
 void Airfoil::computeRotatedFlapPosition() {
@@ -76,8 +113,8 @@ void Airfoil::computeRotatedFlapPosition() {
 
   float maxDis = sqrt(pow(minPt.y-maxPt.y, 2)+pow(minPt.z-maxPt.z, 2)+pow(minPt.x-maxPt.x,2));
 
-  AirfoilParameter parameters = getAirfoilParameter();
-  float flap = maxDis/2 + parameters.flapPosition/cos(parameters.twist);
+  AirfoilParameter airfoilParameters = getAirfoilParameter();
+  float flap = maxDis/2 + airfoilParameters.flapPosition/cos(airfoilParameters.twist);
 
   float flapPos = flap / maxDis;
   setAnyAirfoilParameter(AirfoilParameter::parameterType::FlapPosition, flapPos);
@@ -92,15 +129,15 @@ float Airfoil::computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr
 void Airfoil::setName(std::string& sectionType) {
     std::stringstream ss;
     ss << std::setprecision(2);
-    ss << "../Results/" << sectionType << parameters.cuttingDistance << "mm.dat";
+    ss << "../Results/" << sectionType << airfoilParameters.cuttingDistance << "mm.dat";
 
-    parameters.name = ss.str();
+    airfoilParameters.name = ss.str();
 }
 
 void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection) {
 
-    parameters.offset = computeOffsetFromFirstSection(foil, offsetFirstPoint); //offset in mm
-    parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - firstSection));
+    airfoilParameters.offset = computeOffsetFromFirstSection(foil, offsetFirstPoint); //offset in mm
+    airfoilParameters.sweep = std::atan2(airfoilParameters.offset, (airfoilParameters.cuttingDistance - firstSection));
     
     setName(sectionType);
     computeRotatedFlapPosition();

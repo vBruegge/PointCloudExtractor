@@ -12,7 +12,7 @@
 class GeometryExtractor {
 public:
 
-    Airfoil sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, bool flapRotationNeeded);
+    Airfoil sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float cuttingDistance, int sectioningType);
     //generates a section in a distance of the x-Axis. Surface normals are used to create the plane.
 
     Fuselage sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float cuttingDistance);
@@ -28,6 +28,10 @@ public:
 
     void deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge, float distanceFromTrailingEdge);
 
+    Airfoil findingMorphedReferencePoints(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud);
+
+    void derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& firstReference, pcl::PointXYZ& secondReference);
+
 private:
     int getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::Ptr inputCloud, std::vector<int>& indexLeadingTrailingEdge);
 
@@ -38,6 +42,8 @@ private:
     Airfoil derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, float dihedral);
 
     bool getPolynomialCoeff(std::vector<double> x, std::vector<double> y, double coeff[], int degree);
+
+    void translateSectionToReference(Airfoil& foil, pcl::PointXYZ reference);
 
 };
 
