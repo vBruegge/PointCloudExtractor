@@ -117,6 +117,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
     //derotate flaps
   foil =  derotateFlap(cloudPassThrough, abs(angleCuttingPlane));
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::CuttingDistance, cuttingDistance);
+
   }
   else if(sectioningType == 2) {
     foil = findingMorphedReferencePoints(cloudPassThrough);
@@ -777,5 +778,6 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
   foil.setFoil(inputCloud);
   params.rotationAngle = angle;
   params.scale = scale;
+  params.name = "morphing_wing_" + std::to_string(params.cuttingDistance) + "mm.dat";
   foil.setAllMorphingWingParameter(params);
 }

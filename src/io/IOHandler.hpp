@@ -16,6 +16,8 @@ public:
 
     void writingWingDataInCSV( std::ofstream& outStream, AirfoilParameter data[], std::string& sectionType, int length);
 
+    void writingMorphingWingDataInCSV( std::ofstream& outStream, MorphingWingParameter data[], int length);
+
     void writingFuselageDataInCSV(std::ofstream& outStream, FuselageParameter data[], int length);
 
     void readSectionFile(std::string& filename, float splittingDistance, std::vector<float>& fuselageSections,

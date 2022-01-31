@@ -33,6 +33,19 @@ void IOHandler::writingWingDataInCSV( std::ofstream& outStream, AirfoilParameter
     outStream << ss.str();
 }
 
+void IOHandler::writingMorphingWingDataInCSV( std::ofstream& outStream, MorphingWingParameter data[], int length) {
+    std::stringstream ss;
+    ss << std::setprecision(10);
+    ss << "/TABLE; MorphingWing\n\r"
+        << "/FIELDS\n\r"
+        << "Filename; Sectioning Distance [mm]; Scale []; rotationAngle [deg]\n\r";
+    for(int i = 0; i < length; i++) {
+        ss << data[i].name << "; " << data[i].cuttingDistance << "; " << data[i].scale << "; " << data[i].rotationAngle << "\n\r";
+    }
+    ss << "/END; MorphingWing\n\r\n";
+    outStream << ss.str();
+}
+
 void IOHandler::writingFuselageDataInCSV( std::ofstream& outStream, FuselageParameter data[], int length) {
     std::stringstream ss;
     ss << std::setprecision(10);

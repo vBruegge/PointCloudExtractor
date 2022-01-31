@@ -14,8 +14,7 @@ Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& pa
 
 Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, MorphingWingParameter& parameters_) {
     foil = foil_;
-    morphingWingParameters = parameters_;
-    computeChordLength();  
+    morphingWingParameters = parameters_; 
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr Airfoil::getFoil() {

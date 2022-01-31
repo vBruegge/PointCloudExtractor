@@ -23,6 +23,7 @@ public:
 
 class MorphingWingParameter {
 public:
+    std::string name;
     float cuttingDistance;
     int indexFirstReference;
     int indexSecondReference;
