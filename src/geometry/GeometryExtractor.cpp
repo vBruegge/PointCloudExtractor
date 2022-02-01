@@ -25,7 +25,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   pcl::PassThrough<pcl::PointNormal> pass;
   pass.setInputCloud (inputCloud);
   pass.setFilterFieldName ("x");
-  pass.setFilterLimits (cuttingDistance - 0.2, cuttingDistance + 0.2);
+  pass.setFilterLimits (cuttingDistance - 0.5, cuttingDistance + 0.5);
   pass.filter (*cloudPassThrough);
 
   //pcl::io::savePCDFile("filter1.pcd", *cloudPassThrough);
@@ -170,6 +170,8 @@ Fuselage GeometryExtractor::sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr
   fuselageSection.setFuselage(section);
   fuselageSection.computeFuselageParameter();
   fuselageSection.setAnyFuselageParameter(FuselageParameter::parameterType::CuttingDistance, cuttingDistance);
+  std::string name = "../Results/fuselage_" + std::to_string(cuttingDistance) + "mm.dat";
+  fuselageSection.setName(name);
 
   return fuselageSection;
 }

@@ -34,6 +34,8 @@ public:
     void setAllFuselageParameter(FuselageParameter parameters_);
 
     void computeFuselageParameter();
+
+    void setName(std::string& name);
     
 private:
     pcl::PointCloud<pcl::PointXYZ>::Ptr fuselage;

@@ -52,11 +52,15 @@ void Fuselage::computeFuselageParameter() {
     pcl::getMinMax3D(*fuselage, min, max);
 
     double disX = abs(min.x-max.x)/2;
-    double disY = abs(min.y-max.y)/2;
+    double disY = abs(min.z-max.z)/2;
 
     double xM = (min.x+max.x)/2;
-    double yM = (min.y+max.y)/2;
+    double yM = (min.z+max.z)/2;
 
     FuselageParameter params = {"", 0, disX, disY, xM, yM, 1};
     parameters = params;
+}
+
+void Fuselage::setName(std::string& name) {
+    parameters.name = name;
 }

@@ -19,10 +19,11 @@ PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointNormal>::Ptr in
 }
 
 PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZ>);
     if (pcl::io::loadPCDFile (filename, *inputCloud) == -1){
         std::cerr << "Please enter a valid cloud file" << std::endl;
     }
+    cloudNoNormals = inputCloud;
     aligningPointCloud(fuselageGreaterThanWing);
     estimateNormals();
 }
@@ -65,7 +66,7 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
   Eigen::Vector3f transformation_vector (position_OBB.x, position_OBB.y, position_OBB.z);
   Eigen::Quaternionf rotation_quaternion (rotational_matrix_OBB);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTransformed;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTransformed(new pcl::PointCloud<pcl::PointXYZ>);
   Eigen::Affine3f transform = Eigen::Affine3f::Identity();
   transform.translation() << transformation_vector;
   transform.rotate (rotation_quaternion);
@@ -124,7 +125,7 @@ void PointCloudOperator::splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNorma
     pcl::PassThrough<pcl::PointNormal> pass;
     pass.setInputCloud (cloud);
     pass.setFilterFieldName ("y");
-    pass.setFilterLimits (FLT_MIN, splittingDistance);
+    pass.setFilterLimits (-FLT_MAX, splittingDistance);
     pass.filter (*cloudShort);
     
     pcl::PointNormal minOrg, maxOrg, minShort, maxShort;

@@ -48,14 +48,15 @@ void IOHandler::writingFuselageDataInCSV( std::ofstream& outStream, FuselagePara
     outStream << ss.str();
 }
 
-void IOHandler::readSectionFile(std::string& filename, float splittingDistance, std::vector<float>& fuselageSections,
+void IOHandler::readSectionFile(std::string& filename, float& splittingDistance, std::vector<float>& fuselageSections,
     std::vector<float>& wingSections, std::vector<float>& horizontalTailSections, std::vector<float>& verticalTailSections) {
 
     std::string tailType;
 
-    std::vector<float> sections;
     std::ifstream sectionFile(filename, std::ifstream::in);
     std::string line;
+    std::string type;
+    std::vector<float> sections;
     //reading section file
     if(!sectionFile.is_open())
         std::cout << "Error, no section file!\n";
@@ -66,35 +67,45 @@ void IOHandler::readSectionFile(std::string& filename, float splittingDistance, 
     splittingDistance = std::stof(line);
 
     std::getline(sectionFile, line);
-    fuselageSections = readLineInVector(line);
+    readLineInVector(line, type, sections);
+    fuselageSections = sections;
+
+    sections = {};
+    std::getline(sectionFile, line);
+    readLineInVector(line, type, sections);
+    if(type == "wing")
+        wingSections = sections;
+    else
+        horizontalTailSections = sections;
+    sections = {};
 
     std::getline(sectionFile, line);
-    wingSections = readLineInVector(line);
-
-    std::getline(sectionFile, line);
-    horizontalTailSections = readLineInVector(line);
+    readLineInVector(line, type, sections);
+    if(type == "wing")
+        wingSections = sections;
+    else
+        horizontalTailSections = sections;
+    sections = {};
 
     if(tailType == "h") {
         std::getline(sectionFile, line);
-        verticalTailSections = readLineInVector(line);
+        readLineInVector(line, type, sections);
+        verticalTailSections = sections;
     }
     
 }
 
-std::vector<float> IOHandler::readLineInVector(std::string& line) {
+void IOHandler::readLineInVector(std::string& line, std::string& type, std::vector<float>& sections) {
     std::stringstream ss;
     ss << std::setprecision(2);
     ss << std::fixed;
 
-    std::vector<float> sections;
-
     float tmp;
     ss << line;
+    ss >> type;
     while( ss >> tmp) {
         sections.push_back(tmp);
     }
-
-    return sections;
 }
 
 void IOHandler::convertTXTToPCDFile(std::string& filename) {

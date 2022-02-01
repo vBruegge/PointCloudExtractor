@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/filters/passthrough.h>
@@ -100,7 +101,7 @@ void Airfoil::setName(std::string& sectionType) {
 void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection) {
 
     parameters.offset = computeOffsetFromFirstSection(foil, offsetFirstPoint); //offset in mm
-    parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - firstSection));
+    parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - firstSection))*180.0/M_PI;
     
     setName(sectionType);
     computeRotatedFlapPosition();

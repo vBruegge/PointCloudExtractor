@@ -41,7 +41,7 @@ void FuselageFitter::ellipseFit() {
     section.setAllFuselageParameter(params);
 }
 
-void FuselageFitter::superellipseFit() {
+FuselageParameter FuselageFitter::superellipseFit() {
     FuselageParameter params = section.getFuselageParameter();
     std::vector<Eigen::Vector2d> points(section.getFuselage()->points.size());
     for(int i = 0; i < points.size(); i++) {
@@ -87,5 +87,7 @@ void FuselageFitter::superellipseFit() {
         newPoints[360-i-1] = Eigen::Vector2d(xi, yiNeg);
     }
     io.writingPointCloud(params.name, newPoints);
-    section.setAllFuselageParameter(params);    
+    section.setAllFuselageParameter(params);  
+
+    return params;  
 }

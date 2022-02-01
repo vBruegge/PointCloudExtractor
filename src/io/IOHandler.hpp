@@ -18,13 +18,13 @@ public:
 
     void writingFuselageDataInCSV(std::ofstream& outStream, FuselageParameter data[], int length);
 
-    void readSectionFile(std::string& filename, float splittingDistance, std::vector<float>& fuselageSections,
+    void readSectionFile(std::string& filename, float& splittingDistance, std::vector<float>& fuselageSections,
         std::vector<float>& wingSections, std::vector<float>& horizontalTailSections, std::vector<float>& verticalTailSections);
 
     void convertTXTToPCDFile(std::string& filename);
 
 private:
-    std::vector<float> readLineInVector(std::string& line);
+    void readLineInVector(std::string& line, std::string& type, std::vector<float>& sections);
 };
 
 #endif

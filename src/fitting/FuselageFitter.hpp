@@ -13,7 +13,7 @@ public:
 
     void ellipseFit();
 
-    void superellipseFit();
+    FuselageParameter superellipseFit();
 
 private:
     Fuselage section;

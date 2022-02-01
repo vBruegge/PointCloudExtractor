@@ -19,6 +19,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 include_directories(/usr/local/include)
+include_directories(/usr/local/include/gsl)
 include_directories(${CMAKE_SOURCE_DIR}/../../bodies
                     ${CMAKE_SOURCE_DIR}/../../fitting
                     ${CMAKE_SOURCE_DIR}/../../geometry
@@ -39,5 +40,5 @@ set(SRCS
 
 add_executable (uavExtraction ${SRCS})
 target_link_libraries (uavExtraction PRIVATE ${PCL_LIBRARIES})
-target_link_libraries(uavExtraction PRIVATE GSL::gsl GSL::gslcblas)
+target_link_libraries(uavExtraction PRIVATE GSL::gsl)
 target_link_libraries (uavExtraction PUBLIC sfml-graphics)
