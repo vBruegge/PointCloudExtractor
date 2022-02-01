@@ -25,6 +25,8 @@ public:
 
     void convertTXTToPCDFile(std::string& filename);
 
+    std::vector<Eigen::Vector2d> readAirfoilDATFile(const std::string& filename);
+
 private:
     std::vector<float> readLineInVector(std::string& line);
 };

@@ -300,3 +300,23 @@ void AirfoilFitter::initiateFitting(std::string type) {
     writingPointCloud("../Results/" + name + "_lower.txt", lower);
     writingPointCloud("../Results/" + name + "_newLower.txt", newLower);*/
 }
+
+void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile) {
+    sortUpperAndLowerHalves();
+    orientFoil();
+
+    float maxX = upper[upper.size()-1][0];
+    for(int i = 0; i < referenceProfile.size(); i++) {
+        if(referenceProfile[i][0] > maxX && i < referenceProfile.size() / 2) {
+            upper.push_back(referenceProfile[i]);
+        }
+        else if(referenceProfile[i][0] > maxX && i > referenceProfile.size() / 2) {
+            lower.push_back(referenceProfile[i]);
+        }
+    }
+    std::vector<Eigen::Vector2d> foil;
+    foil.insert(foil.end(), upper.rbegin(), upper.rend());
+    foil.insert(foil.end(), lower.begin(), lower.end());
+
+    io.writingPointCloud("../Results/" + name, foil);
+}

@@ -136,3 +136,28 @@ void IOHandler::convertTXTToPCDFile(std::string& filename) {
     fout << file;
     fout.close();
 }
+
+std::vector<Eigen::Vector2d> IOHandler::readAirfoilDATFile(const std::string& filename) {
+    std::ifstream airfoil(filename, std::ifstream::in);
+    std::string line;
+    //reading section file
+    if(!airfoil.is_open())
+        std::cout << "Error, no airfoil file!\n";
+    
+    std::vector<Eigen::Vector2d> points;
+    std::stringstream ss;
+    while(std::getline(airfoil, line)) {
+
+        Eigen::Vector2d tmp;
+        ss << line;
+        ss >> tmp[0];
+        ss >> tmp[1];
+
+        ss.str("");
+        ss.clear();
+
+        points.push_back(tmp);
+    }
+
+    return points;
+}

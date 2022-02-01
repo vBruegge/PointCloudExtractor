@@ -4,6 +4,7 @@
 #include "GeometryExtractor.hpp"
 #include "IOHandler.hpp"
 #include "DrawUAV.hpp"
+#include "AirfoilFitter.hpp"
 
 int main (int argc, char** argv)
 {
@@ -24,9 +25,26 @@ int main (int argc, char** argv)
     float splittingDistance;
     io.readSectionFile(sectionFilename, splittingDistance, fuselageSections, wingSections, horizontalTailSections,
         verticalTailSections);
+
+    std::string filename = argv[3];
+    std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
+    float xPosFirstReference = 0.4;
+    float xPosSecondReference = 0.7;
+    pcl::PointXYZ firstReference, secondReference;
+    for(int i = reference.size()/2; i < reference.size(); i++) {
+        if(abs(reference[i][0]-xPosFirstReference) < 0.01) {
+            firstReference.x = 0;
+            firstReference.y = reference[i][0];
+            firstReference.z = reference[i][1];
+        }
+        if(abs(reference[i][0]-xPosSecondReference) < 0.01) {
+            secondReference.x = 0;
+            secondReference.y = reference[i][0];
+            secondReference.z = reference[i][1];
+        }
+    }
     
     float positionFlap = argv[3];
-    pcl::PointXYZ firstReference, secondReference;
     MorphingWingParameter data[wingSections.size()];
     GeometryExtractor extract;
     for(int i = 0; i < wingSections.size(); i++) {
@@ -35,7 +53,8 @@ int main (int argc, char** argv)
         data[i] = foil.getMorphingWingParameter();
         int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, positionFlap);
-        //missing flap addition of reference profile
+        AirfoilFitter fitAirfoil;
+        fitAirfoil.replaceMorphedFlap(reference);
     }
 
     std::ofstream aircraftDataFile;

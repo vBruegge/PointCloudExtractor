@@ -23,6 +23,8 @@ public:
 
     std::vector<Eigen::Vector2d> bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points, float trailingEdgeWidth);
 
+    void replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile);
+
 private:
     void computeCompareValues(Airfoil& foil);
     void splitAirfoil(std::vector<Eigen::Vector2d> points);
