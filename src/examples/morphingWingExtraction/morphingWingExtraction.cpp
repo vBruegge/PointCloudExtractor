@@ -35,6 +35,7 @@ int main (int argc, char** argv)
         data[i] = foil.getMorphingWingParameter();
         int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, positionFlap);
+        //missing flap addition of reference profile
     }
 
     std::ofstream aircraftDataFile;
