@@ -13,7 +13,7 @@ int main (int argc, char** argv)
     io.convertTXTToPCDFile(pointCloudFile);
 
     pointCloudFile = pointCloudFile + ".pcd";
-    PointCloudOperator op(pointCloudFile, fuselageGreaterThanWing);
+    PointCloudOperator op(pointCloudFile, false);
 
     std::string sectionFilename = argv[2];
     if(sectionFilename == "new") {
@@ -44,16 +44,16 @@ int main (int argc, char** argv)
         }
     }
     
-    float positionFlap = argv[3];
+    float positionFlap = std::stof(argv[3]);
     MorphingWingParameter data[wingSections.size()];
     GeometryExtractor extract;
     for(int i = 0; i < wingSections.size(); i++) {
         Airfoil section = extract.sectioningCloudX(op.getPointCloudWithNormals(), wingSections[i], 2);
-        extract.derotateToReferencePoints(foil, firstReference, secondReference);
-        data[i] = foil.getMorphingWingParameter();
+        extract.derotateToReferencePoints(section, firstReference, secondReference);
+        data[i] = section.getMorphingWingParameter();
         int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, positionFlap);
-        AirfoilFitter fitAirfoil;
+        AirfoilFitter fitAirfoil(section);
         fitAirfoil.replaceMorphedFlap(reference);
     }
 
