@@ -32,6 +32,11 @@ private:
     float pcl::_PointXYZ::* dim2;
 };
 
+/**
+ * @brief draws different sights of the uav to determine the distances where to cut
+ * 
+ * @param cloud 
+ */
 void sectionGenerationGUI(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
 #endif
