@@ -9,35 +9,42 @@
 
 int main (int argc, char** argv)
 {
+    //convert the given point cloud in a valid PCD file
     std::string pointCloudFile = argv[1];
     IOHandler io;
     io.convertTXTToPCDFile(pointCloudFile);
 
+    // check if the fuselage is greater than the wing width -> additional rotation needed
     std::string fuselageWidth = argv[2];
     bool fuselageGreaterThanWing = false;
     if(fuselageWidth == "y") {
         fuselageGreaterThanWing = true;
     }
+    // reads the converted pcd file, alignes the point cloud and computes normals
     pointCloudFile = pointCloudFile + ".pcd";
     PointCloudOperator op(pointCloudFile, fuselageGreaterThanWing);
 
+    //start the section generation gui if the argument is "new", otherwise use a given sectioning file
     std::string sectionFilename = argv[3];
     if(sectionFilename == "new") {
         sectionGenerationGUI(op.getPointCloudWithoutNormals());
         sectionFilename = "section-generation.txt";
     }
+
+    //reads the given sectioning file !all vectors are needed even if there are no sections which should be generated 
     std::vector<float> fuselageSections, wingSections, horizontalTailSections, verticalTailSections;
     float splittingDistance;
     io.readSectionFile(sectionFilename, splittingDistance, fuselageSections, wingSections, horizontalTailSections,
         verticalTailSections);
 
+    //generates all point clouds which should be sectioned
     pcl::PointCloud<pcl::PointNormal>::Ptr wing(new pcl::PointCloud<pcl::PointNormal>);
     pcl::PointCloud<pcl::PointNormal>::Ptr horizontalTail(new pcl::PointCloud<pcl::PointNormal>); 
     pcl::PointCloud<pcl::PointNormal>::Ptr verticalTail(new pcl::PointCloud<pcl::PointNormal>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr fuselage = op.getPointCloudWithoutNormals();
-
     op.splitCloudInWingAndTail(wing, horizontalTail, verticalTail, splittingDistance);
 
+    //sectioning the fuselage
     GeometryExtractor extract;
     FuselageParameter dataFuselage[fuselageSections.size()];
     for(int i = 0; i < fuselageSections.size(); i++) {
@@ -50,6 +57,7 @@ int main (int argc, char** argv)
     aircraftDataFile.open("../Results/aircraftDataFile.csv", std::fstream::out);
     io.writingFuselageDataInCSV(aircraftDataFile, dataFuselage, fuselageSections.size());
 
+    //sectioning the wing
     bool flapRotationNeeded = true;
     std::string flapRotated = argv[4];
     if(flapRotated == "n")
@@ -72,7 +80,10 @@ int main (int argc, char** argv)
         fitAirfoil.initiateFitting();
         dataWing[i] = section.getAirfoilParameter();
     }
+    std::string sectionType = "wing";
+    io.writingWingDataInCSV(aircraftDataFile, dataWing, sectionType, wingSections.size());
 
+    //sectioning the horizontal tail
     AirfoilParameter dataHTail[horizontalTailSections.size()];
     sectionType = "horizontal_tail";
     for(int i = 0; i < horizontalTailSections.size(); i++) {
@@ -91,7 +102,10 @@ int main (int argc, char** argv)
         fitAirfoil.initiateFitting();
         dataHTail[i] = section.getAirfoilParameter();
     }
+    std::string sectionType = "horizontalTail";
+    io.writingWingDataInCSV(aircraftDataFile, dataHTail, sectionType, horizontalTailSections.size());
 
+    //sectioning the vertical tail
     AirfoilParameter dataVTail[verticalTailSections.size()];
     sectionType = "vertical_tail";
     for(int i = 0; i < verticalTailSections.size(); i++) {
@@ -110,5 +124,9 @@ int main (int argc, char** argv)
         fitAirfoil.initiateFitting();
         dataVTail[i] = section.getAirfoilParameter();
     }
+    std::string sectionType = "vertialTail";
+    io.writingWingDataInCSV(aircraftDataFile, dataVTail, sectionType, verticalTailSections.size());
+
+
     return 0;
 }

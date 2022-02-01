@@ -16,6 +16,7 @@ PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr input
 
 PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud) {
     cloud = inputCloud;
+    pcl::copyPointCloud(*inputCloud, *cloudNoNormals);
 }
 
 PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing) {

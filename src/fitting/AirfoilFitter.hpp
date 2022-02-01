@@ -10,17 +10,49 @@
 
 class AirfoilFitter {
 public:
+    /**
+     * @brief Construct a new Airfoil Fitter object
+     * 
+     * @param foil airfoil section which is the fitted
+     */
     AirfoilFitter(Airfoil& foil);
 
+    /**
+     * @brief executes all needed operations for a complete fitting
+     * 
+     * @param type type of fitting
+     * possible types: spline, bernsteinPolynomial (default)
+     */
     void initiateFitting(std::string type = "bernsteinPolynomial");
 
+    /**
+     * @brief sorts the upper and lower halves of the airfoil both increasingly
+     * 
+     */
     void sortUpperAndLowerHalves();
 
+    /**
+     * @brief orients the foil -> leading edge in the front, not upside down
+     * 
+     */
     void orientFoil();
     //orient foil
 
+    /**
+     * @brief interpolates given points with a spline
+     * 
+     * @param points points which should be fitted
+     * @return std::vector<Eigen::Vector2d> new points of the fitting
+     */
     std::vector<Eigen::Vector2d> splineInterpolation(std::vector<Eigen::Vector2d>& points);
 
+    /**
+     * @brief fits given points with a bernstein polynomial specified by Kulfan
+     * 
+     * @param points points which should be fitted
+     * @param trailingEdgeWidth width of the trailing edge
+     * @return std::vector<Eigen::Vector2d> new points of the fitting
+     */
     std::vector<Eigen::Vector2d> bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points, float trailingEdgeWidth);
 
 private:
