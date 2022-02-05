@@ -79,7 +79,7 @@ public:
      * 
      * @param type parameter type (CuttingDistance, Scale, RotationAnge...)
      * @param value value of the parameter
-     *le
+     */
     void setAnyMorphingWingParameter(MorphingWingParameter::parameterType type, float value);
 
     /**
