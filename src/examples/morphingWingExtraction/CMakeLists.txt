@@ -29,10 +29,12 @@ link_directories(/usr/local/lib)
 set(SRCS
     ${CMAKE_SOURCE_DIR}/../../bodies/Airfoil.cpp
     ${CMAKE_SOURCE_DIR}/../../fitting/AirfoilFitter.cpp
+    ${CMAKE_SOURCE_DIR}/../../fitting/FuselageFitter.cpp
     ${CMAKE_SOURCE_DIR}/../../geometry/GeometryExtractor.cpp
     ${CMAKE_SOURCE_DIR}/../../geometry/PointCloudOperator.cpp
     ${CMAKE_SOURCE_DIR}/../../gui/DrawUAV.cpp
     ${CMAKE_SOURCE_DIR}/../../io/IOHandler.cpp
+    ${CMAKE_SOURCE_DIR}/../../bodies/Fuselage.cpp
     morphingWingExtraction.cpp)
 
 add_executable (morphingWingExtraction ${SRCS})

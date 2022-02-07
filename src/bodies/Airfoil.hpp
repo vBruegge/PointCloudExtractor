@@ -120,6 +120,8 @@ public:
      * @param firstSection cutting distance of the first section
      */
     void generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection);
+
+    void deleteMorphingWingReferences(float widthReferences);
     
 private:
     int findTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
