@@ -35,8 +35,8 @@ int main (int argc, char** argv)
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances
-    float xPosFirstReference = 0.19;
-    float xPosSecondReference = 0.59;
+    float xPosFirstReference = 1-0.194;
+    float xPosSecondReference = 1-0.593;
     pcl::PointXYZ firstReference, secondReference;
     for(int i = reference.size()/2; i < reference.size(); i++) {
         if(abs(reference[i][0]-xPosFirstReference) < 0.01) {
