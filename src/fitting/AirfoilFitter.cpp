@@ -35,7 +35,12 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*foil.getFoil(), minPt, maxPt);
     float sectionDisX = 15;
-    int iterator = abs((maxPt.y-minPt.y)) / sectionDisX + 3;
+    float dis = 5;
+    if(abs(maxPt.y-minPt.y) < 1) {
+        sectionDisX = 0.1;
+        dis = 0.01;
+    }
+    int iterator = abs((maxPt.y-minPt.y)) / sectionDisX + 2;
     std::vector<Eigen::Vector2d> compare_(iterator);
     compare_[0] = Eigen::Vector2d(foil.getFoil()->points[indexMinMax[0]].y, foil.getFoil()->points[indexMinMax[0]].z);
 
@@ -47,7 +52,7 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     for(int i = 1; i < compare_.size(); i++) {
       pass.setInputCloud (foil.getFoil());
       pass.setFilterFieldName ("y");
-      pass.setFilterLimits (beginSection + i*sectionDisX - 5, beginSection + i*sectionDisX + 5);
+      pass.setFilterLimits (beginSection + i*sectionDisX - dis, beginSection + i*sectionDisX + dis);
       pass.filter (*cloudPassThrough);
 
       pcl::getMinMax3D(*cloudPassThrough, minPt, maxPt);
