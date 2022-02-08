@@ -80,7 +80,7 @@ int main (int argc, char** argv)
         fitAirfoil.initiateFitting();
         dataWing[i] = section.getAirfoilParameter();
     }
-    std::string sectionType = "wing";
+
     io.writingWingDataInCSV(aircraftDataFile, dataWing, sectionType, wingSections.size());
 
     //sectioning the horizontal tail
@@ -102,7 +102,7 @@ int main (int argc, char** argv)
         fitAirfoil.initiateFitting();
         dataHTail[i] = section.getAirfoilParameter();
     }
-    std::string sectionType = "horizontalTail";
+
     io.writingWingDataInCSV(aircraftDataFile, dataHTail, sectionType, horizontalTailSections.size());
 
     //sectioning the vertical tail
@@ -124,7 +124,7 @@ int main (int argc, char** argv)
         fitAirfoil.initiateFitting();
         dataVTail[i] = section.getAirfoilParameter();
     }
-    std::string sectionType = "vertialTail";
+
     io.writingWingDataInCSV(aircraftDataFile, dataVTail, sectionType, verticalTailSections.size());
 
 

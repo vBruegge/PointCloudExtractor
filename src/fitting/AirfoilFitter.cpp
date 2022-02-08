@@ -31,7 +31,8 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
 
 void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     //calculate approximative skeleton line of the foil
-    std::vector<int> indexLeadingTrailingEdge = findLeadingTrailingEdge(inputCloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
+    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(inputCloud);
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*inputCloud, minPt, maxPt);
     float sectionDisX = 15;
@@ -63,7 +64,7 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
 
       pcl::getMinMax3D(*cloudPassThrough, minPt, maxPt);
       Eigen::Vector2d compareValue = Eigen::Vector2d((maxPt.y + minPt.y)/2, (maxPt.z + minPt.z)/2);
-      compare_[i] = Eigen::Vector2d((maxPt.y + minPt.y)/2, (maxPt.z + minPt.z)/2);
+      compare[i] = Eigen::Vector2d((maxPt.y + minPt.y)/2, (maxPt.z + minPt.z)/2);
     }
     compare = compare_;
 }
