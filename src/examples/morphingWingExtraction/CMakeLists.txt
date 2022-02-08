@@ -28,6 +28,7 @@ link_directories(/usr/local/lib)
 
 set(SRCS
     ${CMAKE_SOURCE_DIR}/../../bodies/Airfoil.cpp
+    ${CMAKE_SOURCE_DIR}/../../bodies/Fuselage.cpp
     ${CMAKE_SOURCE_DIR}/../../fitting/AirfoilFitter.cpp
     ${CMAKE_SOURCE_DIR}/../../geometry/GeometryExtractor.cpp
     ${CMAKE_SOURCE_DIR}/../../geometry/PointCloudOperator.cpp
