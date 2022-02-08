@@ -156,7 +156,7 @@ int Airfoil::findTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud (inputCloud);
   pass.setFilterFieldName ("y");
-  pass.setFilterLimits (trailingEdgeTmp.y-0.5, trailingEdgeTmp.y+0.5);
+  pass.setFilterLimits (trailingEdgeTmp.y-5, trailingEdgeTmp.y+5);
   pass.filter (*cloudPassThrough);
 
   pcl::PointXYZ min, max;

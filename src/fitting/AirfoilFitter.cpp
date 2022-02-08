@@ -31,29 +31,40 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
 
 void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     //calculate approximative skeleton line of the foil
-    std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil());
+    std::vector<int> indexLeadingTrailingEdge = findLeadingTrailingEdge(inputCloud);
     pcl::PointXYZ maxPt, minPt;
-    pcl::getMinMax3D (*foil.getFoil(), minPt, maxPt);
+    pcl::getMinMax3D (*inputCloud, minPt, maxPt);
     float sectionDisX = 15;
-    int iterator = abs((maxPt.y-minPt.y)) / sectionDisX + 3;
+    int iterator = abs(maxPt.y-minPt.y) / sectionDisX + 2;
     std::vector<Eigen::Vector2d> compare_(iterator);
-    compare_[0] = Eigen::Vector2d(foil.getFoil()->points[indexMinMax[0]].y, foil.getFoil()->points[indexMinMax[0]].z);
+    pcl::PointXYZ leadingEdge = inputCloud->points[indexLeadingTrailingEdge[0]];
+    pcl::PointXYZ trailingEdge = inputCloud->points[indexLeadingTrailingEdge[1]];
 
-    float beginSection = minPt.y;
+    float beginSection;
+    if(leadingEdge.y < trailingEdge.y) {
+      compare_[0] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
+      beginSection = leadingEdge.y;
+      compare_[iterator-1] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-0.5);
+    }
+    else {
+      compare_[0] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-0.5);
+      beginSection = trailingEdge.y;
+      compare_[iterator-1] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
+    }
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPassThrough (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PassThrough<pcl::PointXYZ> pass;
 
-    for(int i = 1; i < compare_.size(); i++) {
-      pass.setInputCloud (foil.getFoil());
+    for(int i = 1; i < iterator-1; i++) {
+      pass.setInputCloud (inputCloud);
       pass.setFilterFieldName ("y");
       pass.setFilterLimits (beginSection + i*sectionDisX - 5, beginSection + i*sectionDisX + 5);
       pass.filter (*cloudPassThrough);
 
       pcl::getMinMax3D(*cloudPassThrough, minPt, maxPt);
+      Eigen::Vector2d compareValue = Eigen::Vector2d((maxPt.y + minPt.y)/2, (maxPt.z + minPt.z)/2);
       compare_[i] = Eigen::Vector2d((maxPt.y + minPt.y)/2, (maxPt.z + minPt.z)/2);
     }
-    compare_[compare_.size()-1] = Eigen::Vector2d(foil.getFoil()->points[indexMinMax[1]].y, foil.getFoil()->points[indexMinMax[1]].z);
     compare = compare_;
 }
 
@@ -70,7 +81,7 @@ void AirfoilFitter::splitAirfoil(std::vector<Eigen::Vector2d> points) {
         }
         //line from first point to second, then calculates the yAxis of the point
         // X = compare[j] + point[i].x * (compare[j+1]-compare[j])
-        Eigen::Vector2d gradient = (compare[compareIndex]-compare[compareIndex-1]);
+        Eigen::Vector2d gradient = (compare[compareIndex+1]-compare[compareIndex]);
         float ycompare = compare[compareIndex][1]+(points[i][0]-compare[compareIndex][0])/gradient[0]*gradient[1];
         std::vector<Eigen::Vector2d> tmpUpper, tmpLower;
         if(points[i][1]> ycompare)
@@ -108,6 +119,8 @@ void AirfoilFitter::orientFoil () {
             upper[i][0] = -upper[i][0];
         for(int i = 0; i < lower.size(); i++)
             lower[i][0] = -lower[i][0];
+        for(int i = 0; i < compare.size(); i++)
+            compare[i][0] = -compare[i][0];
     }
 }
 
@@ -216,7 +229,7 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
     //scale to 1
     for(int i  = 0 ; i < size; i++) {
         //scale to 1 and translate to (0,0)
-        yDc[i] = (points[i][1]-points[min][1])/maxDis;
+        yDc[i] = (points[i][1]-points[max][1])/maxDis+trailingEdgeWidthNormed;
         xDc[i] = (points[i][0]-points[min][0])/maxDis;
     }
     int degree = 8;
@@ -240,7 +253,7 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
         double yiDc = getBernsteinPolynomialValue(xiDc, coeff, degree, binCoeff, trailingEdgeWidthNormed);
         newPoints.push_back(Eigen::Vector2d(xiDc, yiDc));
     }
-    newPoints.push_back(Eigen::Vector2d(1, trailingEdgeWidthNormed/2));
+    newPoints.push_back(Eigen::Vector2d(1, yDc[size-1]));
     return newPoints;
 }                                                                        
 

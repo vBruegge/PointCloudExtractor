@@ -91,7 +91,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
     pass.setFilterLimits (sectionCoefficients->values[3]-projDistance*k, sectionCoefficients->values[3]+projDistance*k);
     pass.filter (*cloudPassThrough);
     k++;
-  } while(cloudPassThrough->size() < 500);
+  } while(cloudPassThrough->size() < 750);
 
   // project the foil
   pcl::ModelCoefficients::Ptr projectionPlane (new pcl::ModelCoefficients ());
@@ -545,7 +545,7 @@ void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge,
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud (inputCloud);
   pass.setFilterFieldName ("y");
-  pass.setFilterLimits (trailingEdge.y-0.5, trailingEdge.y+0.5);
+  pass.setFilterLimits (trailingEdge.y-2, trailingEdge.y+2);
   pass.filter (*cloudPassThrough);
 
   pcl::PointXYZ min, max;
