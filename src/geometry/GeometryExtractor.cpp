@@ -108,7 +108,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   proj.filter (*cloudPassThrough);
 
 
-  //pcl::io::savePCDFile("filter2.txt", *cloudPassThrough);
+  pcl::io::savePCDFile("filter2.txt", *cloudPassThrough);
 
   pcl::transformPointCloud (*cloudPassThrough, *cloudPassThrough, transform);
 
@@ -122,6 +122,9 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   else if(sectioningType == 2) {
     foil = findingMorphedReferencePoints(cloudPassThrough);
     foil.setAnyMorphingWingParameter(MorphingWingParameter::parameterType::CuttingDistance, cuttingDistance);
+    AirfoilParameter params;
+    params.name = "morphing_wing_" + std::to_string(cuttingDistance) + "mm.txt";
+    foil.setAllAirfoilParameter(params);
   }
   else {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals (new pcl::PointCloud<pcl::PointXYZ>);
@@ -675,82 +678,144 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
   std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(cloudNoNormals);
   int indexLeadingEdge = indexLeadingTrailingEdge[0];
   int indexTrailingEdge = indexLeadingTrailingEdge[1];
+  pcl::PointNormal trailingEdgePoint = inputCloud->points[indexLeadingTrailingEdge[1]];
+  pcl::PointNormal leadingEdgePoint = inputCloud->points[indexLeadingTrailingEdge[0]];
   float trailingEdge =  cloudNoNormals->points[indexLeadingTrailingEdge[1]].y;
   float lengthFoil = abs(inputCloud->points[indexLeadingEdge].y-inputCloud->points[indexTrailingEdge].y);
 
-  pcl::PointNormal searchPoint;
-  searchPoint.x = inputCloud->points[indexLeadingEdge].x; 
-  searchPoint.y = inputCloud->points[indexTrailingEdge].y-(inputCloud->points[indexTrailingEdge].y-
-      inputCloud->points[indexLeadingEdge].y)/8.5;
-  searchPoint.z = (inputCloud->points[indexTrailingEdge].z);
-  
+  pcl::PointNormal searchPoint = trailingEdgePoint;
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr upper(new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PointCloud<pcl::PointNormal>::Ptr lower(new pcl::PointCloud<pcl::PointNormal>);
+  pcl::PassThrough<pcl::PointNormal> pass;
+  pass.setInputCloud (inputCloud);
+  pass.setFilterFieldName ("z");
+  pass.setFilterLimits (trailingEdgePoint.z, FLT_MAX);
+  pass.filter (*upper);
+  pass.setFilterLimits (-FLT_MAX, trailingEdgePoint.z);
+  pass.filter (*lower);
+  pcl::PointNormal minUpper, maxUpper, minLower, maxLower;
+  pcl::getMinMax3D(*upper, minUpper, maxUpper);
+  pcl::getMinMax3D(*lower, minLower, maxLower);
+  pcl::PointCloud<pcl::PointNormal>::Ptr compare(new pcl::PointCloud<pcl::PointNormal>);
+  if(abs(minUpper.z-maxUpper.z) > abs(minLower.z-maxLower.z))
+    compare = lower;
+  else
+    compare = upper;
+    
   //nearest neighbor search for iterating through neighboring points in none-ordered point cloud
   //setup of the search tree
-  int n = 40;
+  int n = 10;
   pcl::KdTreeFLANN<pcl::PointNormal> kdtree;
-  kdtree.setInputCloud (inputCloud);
-
+  kdtree.setInputCloud (compare);
+ 
   std::vector<int> pointIndexSearch(n);
   std::vector<float> pointDistanceSearch(n);
   float angle;
-  pcl::PointNormal save = searchPoint;
+  pcl::PointNormal save;
 
   int firstPointIndex = -1;
   int secondPointIndex = -1;
 
-  //perform search
-  kdtree.nearestKSearch (searchPoint, 1, pointIndexSearch, pointDistanceSearch);
-  searchPoint = inputCloud->points[pointIndexSearch[0]];
+  std::cout << std::endl;
+  float widthReferences = 0.0;
   do {
     kdtree.nearestKSearch (searchPoint, n, pointIndexSearch, pointDistanceSearch);
     save = searchPoint;
-    int i;
-    float angle;
     //find nearest point in direction to the leading edge
-    for(i = 1; i < n; i++) {
-      if(abs(inputCloud->points[pointIndexSearch[i]].y-trailingEdge) > abs(searchPoint.y-trailingEdge)) {
-        searchPoint = inputCloud->points[pointIndexSearch[i]];
-        angle = pcl::getAngle3D(Eigen::Vector3f(save.normal_x, save.normal_y, save.normal_z),Eigen::Vector3f(searchPoint.normal_x, searchPoint.normal_y, searchPoint.normal_z));
+    for(int i = 1; i < n; i++) {
+      if(abs(compare->points[pointIndexSearch[i]].y-trailingEdge) > abs(searchPoint.y-trailingEdge)) {
+        searchPoint = compare->points[pointIndexSearch[i]];
+        float angle = pcl::getAngle3D(Eigen::Vector3f(save.normal_x, save.normal_y, save.normal_z),Eigen::Vector3f(searchPoint.normal_x, searchPoint.normal_y, searchPoint.normal_z));
+        std::cout << angle << std::endl;
         //calculate angle betweeen the surface normal of the flap and the foil if there is a discontinuity
-        if(abs(angle - M_PI/2) < (double)5/360*M_PI) {
-          if(searchPoint.y < 0.5*lengthFoil) {
+        if(abs(angle) > 20.0/180.0*M_PI) {
+          if(abs(trailingEdge - searchPoint.y) < 0.4*lengthFoil && abs(trailingEdge - searchPoint.y) > 0.1*lengthFoil
+                    && firstPointIndex == -1) {
             firstPointIndex = pointIndexSearch[i];
           }
-          else {
+          else if(abs(trailingEdge - searchPoint.y) < 0.4*lengthFoil && firstPointIndex != -1) {
+            widthReferences = abs(searchPoint.y - compare->points[firstPointIndex].y);
+          }
+          else if(abs(trailingEdge - searchPoint.y) > 0.4*lengthFoil) {
             secondPointIndex = pointIndexSearch[i];
+            break;
           }
         }
         break;
       }      
     }
   } while(firstPointIndex == -1 || secondPointIndex == -1);
+
   MorphingWingParameter params;
-  params.indexFirstReference = firstPointIndex;
-  params.indexSecondReference = secondPointIndex;
+  kdtree.setInputCloud (inputCloud);
+  kdtree.nearestKSearch (compare->points[firstPointIndex], 1, pointIndexSearch, pointDistanceSearch);
+  params.indexFirstReference = pointIndexSearch[0];
+  kdtree.nearestKSearch (compare->points[secondPointIndex], 1, pointIndexSearch, pointDistanceSearch);
+  params.indexSecondReference = pointIndexSearch[0];
   foil.setAllMorphingWingParameter(params);
+
+  foil.deleteMorphingWingReferences(widthReferences);
+
   return foil;
 }
 
 void GeometryExtractor::translateSectionToReference(Airfoil& foil, pcl::PointXYZ reference) {
   //translates center of the Point Cloud to Reference Point
+  pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
+  std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(inputCloud);
+  if(inputCloud->points[indexLeadingTrailingEdge[0]].y > inputCloud->points[indexLeadingTrailingEdge[1]].y) {
+    for(int i = 0; i < inputCloud->points.size(); i++) {
+        inputCloud->points[i].y = -inputCloud->points[i].y;
+    }
+    pcl::io::savePCDFile("switched.txt", *inputCloud);
+  }
 
-  pcl::PointXYZ point = foil.getFoil()->points[foil.getMorphingWingParameter().indexFirstReference];
-  const Eigen::Vector3f translationVector (point.x-reference.x, point.y-reference.y, point.z-reference.z);
+  MorphingWingParameter params = foil.getMorphingWingParameter();
+  pcl::PointXYZ point = inputCloud->points[params.indexFirstReference];
+  const Eigen::Vector3f translationVector (reference.x-point.x, reference.y-point.y, reference.z-point.z);
 
   Eigen::Affine3f transformationAffine = Eigen::Affine3f::Identity();
   transformationAffine.translation() << translationVector;
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformedCloud (new pcl::PointCloud<pcl::PointXYZ>);
 
-  pcl::transformPointCloud (*foil.getFoil(), *transformedCloud, transformationAffine);
+  pcl::transformPointCloud (*inputCloud, *transformedCloud, transformationAffine);
   foil.setFoil(transformedCloud);
+  pcl::io::savePCDFile("translated.txt", *transformedCloud);
 }
 
 void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& firstReference, pcl::PointXYZ& secondReference) {
-  pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
   MorphingWingParameter params = foil.getMorphingWingParameter();
-  pcl::PointXYZ firstPoint = inputCloud->points[params.indexFirstReference];
-  pcl::PointXYZ secondPoint = inputCloud->points[params.indexSecondReference];
+  pcl::io::savePCDFile("non-rotated.txt", *foil.getFoil());
+
+  Eigen::Vector3f referenceVector;
+  referenceVector << secondReference.x-firstReference.x, secondReference.y-firstReference.y, secondReference.z-firstReference.z;
+  pcl::PointXYZ firstPoint = foil.getFoil()->points[params.indexFirstReference];
+  pcl::PointXYZ secondPoint = foil.getFoil()->points[params.indexSecondReference];
+  Eigen::Vector3f pointVector;
+  pointVector << secondPoint.x-firstPoint.x, secondPoint.y-firstPoint.y, secondPoint.z-firstPoint.z;
+  float angle = pcl::getAngle3D(pointVector, referenceVector);
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr rotated(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr rotatedInverse(new pcl::PointCloud<pcl::PointXYZ>);
+  const Eigen::AngleAxisf rotationQuaternion (angle, Eigen::Vector3f::UnitX());
+  Eigen::Affine3f transformationAffine = Eigen::Affine3f::Identity();
+  transformationAffine.rotate (rotationQuaternion);
+
+  pcl::transformPointCloud (*foil.getFoil(), *rotated, transformationAffine);
+  pcl::transformPointCloud (*foil.getFoil(), *rotatedInverse, transformationAffine.inverse());
+
+  pcl::PointXYZ minRot, maxRot, minRotInv, maxRotInv;
+  pcl::getMinMax3D(*rotated, minRot, maxRot);
+  pcl::getMinMax3D(*rotatedInverse, minRotInv, maxRotInv);
+  if(abs(maxRot.z-minRot.z) < abs(maxRotInv.z-minRotInv.z))
+    inputCloud = rotated;
+  else
+    inputCloud = rotatedInverse;
   
+  firstPoint = inputCloud->points[params.indexFirstReference];
+  secondPoint = inputCloud->points[params.indexSecondReference];
   float referenceLength = Eigen::Vector2f(firstReference.y-secondReference.y, firstReference.z-secondReference.z).norm();
   float pointsLength = Eigen::Vector2f(firstPoint.y-secondPoint.y, firstPoint.z-secondPoint.z).norm();
   float scale = referenceLength/pointsLength;
@@ -760,24 +825,11 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
     inputCloud->points[i].y *= scale;
     inputCloud->points[i].z *= scale;
   }
-  
+  pcl::io::savePCDFile("rotated-scaled.txt", *inputCloud);
+
   foil.setFoil(inputCloud);
   translateSectionToReference(foil, firstReference);
-  Eigen::Vector3f referenceVector;
-  referenceVector << secondReference.x-firstReference.x, secondReference.y-firstReference.y, secondReference.z-firstReference.z;
-  firstPoint = foil.getFoil()->points[params.indexFirstReference];
-  secondPoint = foil.getFoil()->points[params.indexSecondReference];
-  Eigen::Vector3f pointVector;
-  pointVector << secondPoint.x-firstPoint.x, secondPoint.y-firstPoint.y, secondPoint.z-firstPoint.z;
-  float angle = pcl::getAngle3D(pointVector, referenceVector);
 
-  const Eigen::AngleAxisf rotationQuaternion (angle, Eigen::Vector3f::UnitX());
-  Eigen::Affine3f transformationAffine = Eigen::Affine3f::Identity();
-  transformationAffine.rotate (rotationQuaternion);
-
-  pcl::transformPointCloud (*foil.getFoil(), *inputCloud, transformationAffine);
-
-  foil.setFoil(inputCloud);
   params.rotationAngle = angle;
   params.scale = scale;
   params.name = "morphing_wing_" + std::to_string(params.cuttingDistance) + "mm.dat";

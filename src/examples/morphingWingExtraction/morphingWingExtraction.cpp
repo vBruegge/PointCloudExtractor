@@ -15,7 +15,7 @@ int main (int argc, char** argv)
 
     //reads the pcd file, alignes the point cloud and computes normals
     pointCloudFile = pointCloudFile + ".pcd";
-    PointCloudOperator op(pointCloudFile, false);
+    PointCloudOperator op(pointCloudFile, true);
 
     //possibility to generate a new sectioning file with the argument "new"
     std::string sectionFilename = argv[2];
@@ -35,8 +35,8 @@ int main (int argc, char** argv)
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances
-    float xPosFirstReference = 0.4;
-    float xPosSecondReference = 0.7;
+    float xPosFirstReference = 1-0.194;
+    float xPosSecondReference = 1-0.593;
     pcl::PointXYZ firstReference, secondReference;
     for(int i = reference.size()/2; i < reference.size(); i++) {
         if(abs(reference[i][0]-xPosFirstReference) < 0.01) {
@@ -52,7 +52,7 @@ int main (int argc, char** argv)
     }
     
     //morphing wing sectioning
-    float positionFlap = std::stof(argv[3]);
+    float positionFlap = std::stof(argv[4]);
     MorphingWingParameter data[wingSections.size()];
     GeometryExtractor extract;
     for(int i = 0; i < wingSections.size(); i++) {

@@ -205,3 +205,73 @@ int Airfoil::findTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
   //std::cout << inputCloud->points[indexTrailingEdge].x << " "  << inputCloud->points[indexTrailingEdge].y << " " << inputCloud->points[indexTrailingEdge].z << std::endl;
   return indexTrailingEdge;
 }
+
+void Airfoil::deleteMorphingWingReferences(float widthReferences) {
+    int indexTrailingEdge = findTrailingEdge(foil);
+    pcl::PointXYZ trailingEdgePoint = foil->points[indexTrailingEdge];
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr upper(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr lower(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud (foil);
+    pass.setFilterFieldName ("z");
+    pass.setFilterLimits (trailingEdgePoint.z, FLT_MAX);
+    pass.filter (*upper);
+    pass.setFilterLimits (-FLT_MAX, trailingEdgePoint.z);
+    pass.filter (*lower);
+    pcl::PointXYZ minUpper, maxUpper, minLower, maxLower;
+    pcl::getMinMax3D(*upper, minUpper, maxUpper);
+    pcl::getMinMax3D(*lower, minLower, maxLower);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr save(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr leftSide(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr rightSide(new pcl::PointCloud<pcl::PointXYZ>);
+    if(abs(minUpper.z-maxUpper.z) > abs(minLower.z-maxLower.z)) {
+        pass.setInputCloud(lower);
+        save = upper;
+    }
+    else {
+        pass.setInputCloud(upper);
+        save = lower;
+    }
+
+    pcl::PointXYZ firstReference = foil->points[morphingWingParameters.indexFirstReference];
+    pcl::PointXYZ secondReference = foil->points[morphingWingParameters.indexSecondReference];
+    pcl::PointCloud<pcl::PointXYZ>::Ptr deleted(new pcl::PointCloud<pcl::PointXYZ>);
+
+    pass.setFilterFieldName("y");
+    if(firstReference.y < trailingEdgePoint.y) {
+        pass.setFilterLimits(firstReference.y+0.25, FLT_MAX);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(-FLT_MAX, firstReference.y-0.25-widthReferences);
+        pass.filter(*leftSide);
+        pcl::concatenate(*leftSide, *rightSide, *deleted);
+        pass.setInputCloud(deleted);
+        pass.setFilterLimits(secondReference.y+0.25, FLT_MAX);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(-FLT_MAX, secondReference.y-0.25-widthReferences);
+        pass.filter(*leftSide);
+    }
+    else {
+        pass.setFilterLimits(-FLT_MAX, firstReference.y-0.25);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(firstReference.y+0.25+widthReferences, FLT_MAX);
+        pass.filter(*leftSide);
+        pcl::concatenate(*leftSide, *rightSide, *deleted);
+        pass.setInputCloud(deleted);
+        pass.setFilterLimits(-FLT_MAX, secondReference.y-0.25);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(secondReference.y+0.25+widthReferences, FLT_MAX);
+        pass.filter(*leftSide);
+    }
+    pcl::concatenate(*leftSide, *rightSide, *deleted);
+    pcl::concatenate(*deleted, *save, *foil);
+
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud (foil);
+    std::vector<int> pointIndexSearch(1);
+    std::vector<float> pointDistanceSearch(1);
+    kdtree.nearestKSearch (firstReference, 1, pointIndexSearch, pointDistanceSearch);
+    morphingWingParameters.indexFirstReference = pointIndexSearch[0];
+    kdtree.nearestKSearch (secondReference, 1, pointIndexSearch, pointDistanceSearch);
+    morphingWingParameters.indexSecondReference = pointIndexSearch[0];
+}
