@@ -92,8 +92,8 @@ float Airfoil::computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr
 
 void Airfoil::setName(std::string& sectionType) {
     std::stringstream ss;
-    ss << std::setprecision(2);
-    ss << "../Results/" << sectionType << parameters.cuttingDistance << "mm.dat";
+    ss << std::setprecision(4);
+    ss << "../Results/" << sectionType << "_" << parameters.cuttingDistance << "mm.dat";
 
     parameters.name = ss.str();
 }
