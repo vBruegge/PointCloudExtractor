@@ -51,7 +51,7 @@ int main (int argc, char** argv)
         Fuselage section = extract.sectioningCloudY(fuselage, fuselageSections[i]);
         FuselageFitter fitFuselage(section);
         dataFuselage[i] = fitFuselage.superellipseFit();
-        std::cout << "Writing fuselage complete..";
+        std::cout << "Writing fuselage complete..\n";
     }
 
     std::ofstream aircraftDataFile;

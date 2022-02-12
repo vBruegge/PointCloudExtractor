@@ -295,6 +295,12 @@ void AirfoilFitter::initiateFitting(std::string type) {
     sortUpperAndLowerHalves();
     orientFoil();
     sortUpperAndLowerHalves();
+    float disX = abs(upper[0][1]-lower[0][1]);
+    if(disX > 1) {
+        Eigen::Vector2d center = Eigen::Vector2d(std::min(upper[0][0],lower[0][0]), (upper[0][1]+lower[0][1])/2);
+        lower.insert(lower.begin(), center);
+        upper.insert(upper.begin(), center);
+    }
 
     std::vector<Eigen::Vector2d> newUpper;
     std::vector<Eigen::Vector2d> newLower;
@@ -311,8 +317,8 @@ void AirfoilFitter::initiateFitting(std::string type) {
     foil.insert(foil.end(), newUpper.rbegin(), newUpper.rend());
     foil.insert(foil.end(), newLower.begin(), newLower.end());
 
-    io.writingPointCloud("../Results/" + name, foil);
-    /*io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
+    /*io.writingPointCloud("../Results/" + name, foil);
+    io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
     io.writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
     io.writingPointCloud("../Results/" + name + "_compare.txt", compare);
     io.writingPointCloud("../Results/" + name + "_lower.txt", lower);
