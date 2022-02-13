@@ -10,4 +10,5 @@ A library for extracting geometries of a 3D scan
 
 # examples
 
-Examples for extraction methods can be found in `src/examples
+Examples for extraction methods can be found in `src/examples`
+
