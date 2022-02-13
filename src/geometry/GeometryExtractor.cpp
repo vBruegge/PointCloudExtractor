@@ -291,8 +291,9 @@ void GeometryExtractor::translateSection(Airfoil& foil){
   //translates center of the Point Cloud to Point Zero
 
   std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil());
-  pcl::PointXYZ minPt = foil.getFoil()->points[indexMinMax[0]];
-  pcl::PointXYZ maxPt = foil.getFoil()->points[indexMinMax[1]];
+  pcl::PointXYZ leadingEdge = foil.getFoil()->points[indexMinMax[0]];
+  pcl::PointXYZ trailingEdge = foil.getFoil()->points[indexMinMax[1]];
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdge, leadingEdge);
 
   const Eigen::Vector3f translationVector (-(maxPt.x+minPt.x)/2, -(maxPt.y + minPt.y)/2, -(maxPt.z + minPt.z)/2);
 
