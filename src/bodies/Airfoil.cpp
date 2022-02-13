@@ -103,7 +103,8 @@ void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, pcl::Poi
     parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - posFirstLeadingEdge.x))*180.0/M_PI;
     
     setName(sectionType);
-    computeRotatedFlapPosition();
+    if(parameters.flapPosition != 0)
+        computeRotatedFlapPosition();
 }
 
 std::vector<int> Airfoil::findLeadingTrailingEdge() {

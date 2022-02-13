@@ -293,7 +293,7 @@ void GeometryExtractor::translateSection(Airfoil& foil){
   std::vector<int> indexMinMax = foil.findLeadingTrailingEdge();
   pcl::PointXYZ leadingEdge = foil.getFoil()->points[indexMinMax[0]];
   pcl::PointXYZ trailingEdge = foil.getFoil()->points[indexMinMax[1]];
-  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeX, leadingEdge.x);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeX, foil.getAirfoilParameter().cuttingDistance);
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeY, leadingEdge.y);
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeZ, leadingEdge.z);
 
@@ -308,8 +308,10 @@ void GeometryExtractor::translateSection(Airfoil& foil){
 
   //shift of the position of the flap
   AirfoilParameter parameters = foil.getAirfoilParameter();
-  parameters.flapPosition = parameters.flapPosition + translationVector[1];
-  foil.setAllAirfoilParameter(parameters);
+  if(parameters.flapPosition != 0) {
+    parameters.flapPosition = parameters.flapPosition + translationVector[1];
+    foil.setAllAirfoilParameter(parameters);
+  }
 }
 
 int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::Ptr inputCloud, std::vector<int>& indexLeadingTrailingEdge) {

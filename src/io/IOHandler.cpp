@@ -26,6 +26,10 @@ void IOHandler::writingWingDataInCSV( std::ofstream& outStream, AirfoilParameter
         << "Flap Position [%]; Offset [mm]; Sweep [deg]; Trailing Edge Width [mm]; x-Position Leading Edge [mm]; "
         << "y-Position Leading Edge [mm]; z-Position Leading Edge [mm]\n\r";
     for(int i = 0; i < length; i++) {
+        if(sectionType == "vertical_tail") {
+            data[i].posLeadingEdge.z = data[i].posLeadingEdge.x;
+            data[i].posLeadingEdge.x = 0;
+        }
         ss << data[i].name << "; " << data[i].cuttingDistance << "; " << data[i].chordLength << "; " << data[i].dihedral << "; "
             << data[i].twist << "; " << data[i].flapPosition << "; " << data[i].offset << "; " << data[i].sweep << "; "
             << data[i].trailingEdgeWidth << "; " << data[i].posLeadingEdge.x << "; " << data[i].posLeadingEdge.y << "; "
