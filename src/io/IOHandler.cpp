@@ -23,11 +23,13 @@ void IOHandler::writingWingDataInCSV( std::ofstream& outStream, AirfoilParameter
     ss << "/TABLE; " << sectionType << "\n\r"
         << "/FIELDS\n\r"
         << "Filename; Sectioning Distance [mm]; Chord Length [mm]; Dihedral [deg]; Twist [deg]; "
-        << "Flap Position [%]; Offset [mm]; Sweep [deg]; Trailing Edge Width [mm]\n\r";
+        << "Flap Position [%]; Offset [mm]; Sweep [deg]; Trailing Edge Width [mm]; x-Position Leading Edge [mm]; "
+        << "y-Position Leading Edge [mm]; z-Position Leading Edge [mm]\n\r";
     for(int i = 0; i < length; i++) {
         ss << data[i].name << "; " << data[i].cuttingDistance << "; " << data[i].chordLength << "; " << data[i].dihedral << "; "
             << data[i].twist << "; " << data[i].flapPosition << "; " << data[i].offset << "; " << data[i].sweep << "; "
-            << data[i].trailingEdgeWidth <<"\n\r";
+            << data[i].trailingEdgeWidth << "; " << data[i].posLeadingEdge.x << "; " << data[i].posLeadingEdge.y << "; "
+            << data[i].posLeadingEdge.z << "\n\r";
     }
     ss << "/END; " << sectionType << "\n\r\n";
     outStream << ss.str();
