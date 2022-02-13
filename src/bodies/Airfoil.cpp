@@ -52,8 +52,12 @@ void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float
     case AirfoilParameter::TrailingEdgeWidth:
         parameters.trailingEdgeWidth = value;
         break;
-    case AirfoilParameter::PosLeadingEdge:
-        parameters.posLeadingEdge = value;
+    case AirfoilParameter::PosLeadingEdgeX:
+        parameters.posLeadingEdge.x = value;
+    case AirfoilParameter::PosLeadingEdgeY:
+        parameters.posLeadingEdge.y = value;
+    case AirfoilParameter::PosLeadingEdgeZ:
+        parameters.posLeadingEdge.z = value;
     default:
         break;
     }
@@ -72,7 +76,7 @@ void Airfoil::computeChordLength(){
 
 void Airfoil::computeRotatedFlapPosition() {
   //returns flap position normalized
-  std::vector<int> indexMinMax = findLeadingTrailingEdge(foil);
+  std::vector<int> indexMinMax = findLeadingTrailingEdge();
   pcl::PointXYZ minPt, maxPt;
   minPt = foil->points[indexMinMax[0]];
   maxPt = foil->points[indexMinMax[1]];
@@ -95,8 +99,8 @@ void Airfoil::setName(std::string& sectionType) {
 
 void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ posFirstLeadingEdge) {
 
-    parameters.offset = posFirstLEadingEdge.y-parameters.posLeadingEdge.y;
-    parameters.sweep = std::atagenerateMissingAirfoilParametern2(parameters.offset, (parameters.cuttingDistance - posFirstLeadingEdge.x))*180.0/M_PI;
+    parameters.offset = posFirstLeadingEdge.y-parameters.posLeadingEdge.y;
+    parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - posFirstLeadingEdge.x))*180.0/M_PI;
     
     setName(sectionType);
     computeRotatedFlapPosition();
@@ -104,7 +108,7 @@ void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, pcl::Poi
 
 std::vector<int> Airfoil::findLeadingTrailingEdge() {
     //find the index of the min and max of the input cloud
-    int indexTrailingEdge = findTrailingEdge(foil);
+    int indexTrailingEdge = findTrailingEdge();
     std::vector<int> indexLeadingTrailingEdge(2);
     indexLeadingTrailingEdge[1] = indexTrailingEdge;
     

@@ -20,7 +20,7 @@ public:
     float trailingEdgeWidth;
     pcl::PointXYZ posLeadingEdge;
     enum parameterType {CuttingDistance, ChordLength, Dihedral, Twist, FlapPosition, Offset, Sweep,
-        TrailingEdgeWidth, PosLeadingEdge};
+        TrailingEdgeWidth, PosLeadingEdgeX, PosLeadingEdgeY, PosLeadingEdgeZ};
 };
 
 class Airfoil {

@@ -243,7 +243,7 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
 
   float rotationAngle;
 
-  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil()); //find index of min and max of the input cloud
+  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(); //find index of min and max of the input cloud
 
   //vector from trailingEdge to leadingEdge
   Eigen::Vector3f centerLineVector;
@@ -290,7 +290,7 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
 void GeometryExtractor::translateSection(Airfoil& foil){
   //translates center of the Point Cloud to Point Zero
 
-  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil());
+  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge();
   pcl::PointXYZ leadingEdge = foil.getFoil()->points[indexMinMax[0]];
   pcl::PointXYZ trailingEdge = foil.getFoil()->points[indexMinMax[1]];
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdge, leadingEdge);
@@ -385,7 +385,7 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
   Airfoil foilTmp;
   foilTmp.setFoil(cloudNoNormals);
   //find position of the trailingEdge
-  std::vector<int> indexLeadingTrailingEdge = foilTmp.findLeadingTrailingEdge(cloudNoNormals);
+  std::vector<int> indexLeadingTrailingEdge = foilTmp.findLeadingTrailingEdge();
   float trailingEdge =  cloudNoNormals->points[indexLeadingTrailingEdge[1]].y;
 
   int indexFlapPosition = getIndexFlapPosition(inputCloud, indexLeadingTrailingEdge);
@@ -474,7 +474,7 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
   // decide which rotation
 
     pcl::copyPointCloud(*flapRotated, *cloudNoNormals);
-    std::vector<int> indexMinMax = foilTmp.findLeadingTrailingEdge(cloudNoNormals);
+    std::vector<int> indexMinMax = foilTmp.findLeadingTrailingEdge();
     //vector from flap position to trailing edge
     Eigen::Vector3f flapSurfaceVector;
     if(abs(flapRotated->points[pointIndexSearch[0]].y-flapRotated->points[indexMinMax[0]].y) > abs(flapRotated->points[pointIndexSearch[0]].y-flapRotated->points[indexMinMax[1]].y)) {

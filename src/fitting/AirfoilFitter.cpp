@@ -31,7 +31,7 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
 void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     //calculate approximative skeleton line of the foil
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
-    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(inputCloud);
+    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge();
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*inputCloud, minPt, maxPt);
     float sectionDisX = 15;
