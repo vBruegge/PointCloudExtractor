@@ -293,9 +293,11 @@ void GeometryExtractor::translateSection(Airfoil& foil){
   std::vector<int> indexMinMax = foil.findLeadingTrailingEdge();
   pcl::PointXYZ leadingEdge = foil.getFoil()->points[indexMinMax[0]];
   pcl::PointXYZ trailingEdge = foil.getFoil()->points[indexMinMax[1]];
-  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdge, leadingEdge);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeX, leadingEdge.x);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeY, leadingEdge.y);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeZ, leadingEdge.z);
 
-  const Eigen::Vector3f translationVector (-(maxPt.x+minPt.x)/2, -(maxPt.y + minPt.y)/2, -(maxPt.z + minPt.z)/2);
+  const Eigen::Vector3f translationVector (-(trailingEdge.x+leadingEdge.x)/2, -(trailingEdge.y + leadingEdge.y)/2, -(trailingEdge.z + leadingEdge.z)/2);
 
   Eigen::Affine3f transformationAffine = Eigen::Affine3f::Identity();
   transformationAffine.translation() << translationVector;
