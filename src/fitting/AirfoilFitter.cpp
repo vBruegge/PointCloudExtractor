@@ -31,7 +31,7 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
 void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     //calculate approximative skeleton line of the foil
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
-    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(inputCloud);
+    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge();
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*inputCloud, minPt, maxPt);
     float sectionDisX = 15;
@@ -317,8 +317,8 @@ void AirfoilFitter::initiateFitting(std::string type) {
     foil.insert(foil.end(), newUpper.rbegin(), newUpper.rend());
     foil.insert(foil.end(), newLower.begin(), newLower.end());
 
-    /*io.writingPointCloud("../Results/" + name, foil);
-    io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
+    io.writingPointCloud("../Results/" + name, foil);
+    /*io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
     io.writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
     io.writingPointCloud("../Results/" + name + "_compare.txt", compare);
     io.writingPointCloud("../Results/" + name + "_lower.txt", lower);

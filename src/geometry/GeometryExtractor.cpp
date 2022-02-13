@@ -243,7 +243,7 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
 
   float rotationAngle;
 
-  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil()); //find index of min and max of the input cloud
+  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(); //find index of min and max of the input cloud
 
   //vector from trailingEdge to leadingEdge
   Eigen::Vector3f centerLineVector;
@@ -290,11 +290,14 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
 void GeometryExtractor::translateSection(Airfoil& foil){
   //translates center of the Point Cloud to Point Zero
 
-  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge(foil.getFoil());
-  pcl::PointXYZ minPt = foil.getFoil()->points[indexMinMax[0]];
-  pcl::PointXYZ maxPt = foil.getFoil()->points[indexMinMax[1]];
+  std::vector<int> indexMinMax = foil.findLeadingTrailingEdge();
+  pcl::PointXYZ leadingEdge = foil.getFoil()->points[indexMinMax[0]];
+  pcl::PointXYZ trailingEdge = foil.getFoil()->points[indexMinMax[1]];
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeX, foil.getAirfoilParameter().cuttingDistance);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeY, leadingEdge.y);
+  foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::PosLeadingEdgeZ, leadingEdge.z);
 
-  const Eigen::Vector3f translationVector (-(maxPt.x+minPt.x)/2, -(maxPt.y + minPt.y)/2, -(maxPt.z + minPt.z)/2);
+  const Eigen::Vector3f translationVector (-(trailingEdge.x+leadingEdge.x)/2, -(trailingEdge.y + leadingEdge.y)/2, -(trailingEdge.z + leadingEdge.z)/2);
 
   Eigen::Affine3f transformationAffine = Eigen::Affine3f::Identity();
   transformationAffine.translation() << translationVector;
@@ -305,8 +308,10 @@ void GeometryExtractor::translateSection(Airfoil& foil){
 
   //shift of the position of the flap
   AirfoilParameter parameters = foil.getAirfoilParameter();
-  parameters.flapPosition = parameters.flapPosition + translationVector[1];
-  foil.setAllAirfoilParameter(parameters);
+  if(parameters.flapPosition != 0) {
+    parameters.flapPosition = parameters.flapPosition + translationVector[1];
+    foil.setAllAirfoilParameter(parameters);
+  }
 }
 
 int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::Ptr inputCloud, std::vector<int>& indexLeadingTrailingEdge) {
@@ -384,7 +389,7 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
   Airfoil foilTmp;
   foilTmp.setFoil(cloudNoNormals);
   //find position of the trailingEdge
-  std::vector<int> indexLeadingTrailingEdge = foilTmp.findLeadingTrailingEdge(cloudNoNormals);
+  std::vector<int> indexLeadingTrailingEdge = foilTmp.findLeadingTrailingEdge();
   float trailingEdge =  cloudNoNormals->points[indexLeadingTrailingEdge[1]].y;
 
   int indexFlapPosition = getIndexFlapPosition(inputCloud, indexLeadingTrailingEdge);
@@ -473,7 +478,7 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
   // decide which rotation
 
     pcl::copyPointCloud(*flapRotated, *cloudNoNormals);
-    std::vector<int> indexMinMax = foilTmp.findLeadingTrailingEdge(cloudNoNormals);
+    std::vector<int> indexMinMax = foilTmp.findLeadingTrailingEdge();
     //vector from flap position to trailing edge
     Eigen::Vector3f flapSurfaceVector;
     if(abs(flapRotated->points[pointIndexSearch[0]].y-flapRotated->points[indexMinMax[0]].y) > abs(flapRotated->points[pointIndexSearch[0]].y-flapRotated->points[indexMinMax[1]].y)) {

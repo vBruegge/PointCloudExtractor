@@ -18,7 +18,9 @@ public:
     float offset;
     float sweep;
     float trailingEdgeWidth;
-    enum parameterType {CuttingDistance, ChordLength, Dihedral, Twist, FlapPosition, Offset, Sweep, TrailingEdgeWidth};
+    pcl::PointXYZ posLeadingEdge;
+    enum parameterType {CuttingDistance, ChordLength, Dihedral, Twist, FlapPosition, Offset, Sweep,
+        TrailingEdgeWidth, PosLeadingEdgeX, PosLeadingEdgeY, PosLeadingEdgeZ};
 };
 
 class Airfoil {
@@ -75,27 +77,22 @@ public:
      * @param inputCloud foil to search for
      * @return std::vector<int> index of the point cloud of (first) leading and (second) trailing edge
      */
-    std::vector<int> findLeadingTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
+    std::vector<int> findLeadingTrailingEdge();
 
     /**
      * @brief computes missing airfoil parameter which are not set in previous methods
      * 
      * @param sectionType type of the section (e.g. wing/horizontal_tail...)
-     * @param offsetFirstPoint y position of the leading edge of the first section
-     * @param firstSection cutting distance of the first section
+     * @param firstLeadingEdgePos position of the leading edge of the first section made
      */
-    void generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection);
+    void generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ firstLeadingEdgePos);
     
 private:
-    int findTrailingEdge(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
+    int findTrailingEdge();
 
     void computeChordLength();
 
-    void computeFlapPosition(Airfoil& foil, std::vector<int> indexMinMax);
-
     void setName(std::string& sectionType);
-
-    float computeOffsetFromFirstSection(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float offsetFirstPoint);
 
     void computeRotatedFlapPosition();
 
