@@ -28,7 +28,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   pass.setFilterLimits (cuttingDistance - 0.5, cuttingDistance + 0.5);
   pass.filter (*cloudPassThrough);
 
-  //pcl::io::savePCDFile("filter1.pcd", *cloudPassThrough);
+  //pcl::io::savePCDFile("filter1.txt", *cloudPassThrough);
  
   Eigen::Vector3f surfaceNormal (0.0, 0.0, 0.0);
   //generate an average of all normals near the cuttingDistance
@@ -54,15 +54,11 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   cuttingPlaneNormal = surfaceNormal.cross(Eigen::Vector3f::UnitY());
 
   //angle between CuttingPlane and XY Plane for rotating cloud
-  float angleCuttingPlane = pcl::getAngle3D(cuttingPlaneNormal, Eigen::Vector3f::UnitZ());
-  if(abs(angleCuttingPlane - M_PI/2) < (float) 15/180*M_PI)
-    angleCuttingPlane -= M_PI/2;
-  else if (angleCuttingPlane > M_PI/2)
-    angleCuttingPlane -= M_PI;
+  float angleCuttingPlane = pcl::getAngle3D(cuttingPlaneNormal, Eigen::Vector3f::UnitZ())-M_PI/2;
 
   //Definition of rotation matrix with angle of the cuttingPlane
   const Eigen::Vector3f   translationVectorCuttingPlane (0,0,0);
-  const Eigen::AngleAxisf rotationQuaternionCuttingPlane (angleCuttingPlane, Eigen::Vector3f::UnitY());
+  const Eigen::AngleAxisf rotationQuaternionCuttingPlane (-angleCuttingPlane, Eigen::Vector3f::UnitY());
   Eigen::Affine3f transformationCuttingPlaneNormal = Eigen::Affine3f::Identity();
   transformationCuttingPlaneNormal.translation() << translationVectorCuttingPlane;
   transformationCuttingPlaneNormal.rotate (rotationQuaternionCuttingPlane);
@@ -73,6 +69,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   Eigen::Affine3f transform = transformationCuttingPlaneNormal.inverse();
   pcl::transformPointCloud (*inputCloud, *inputCloudTransformed, transform);
 
+  //pcl::io::savePCDFile("transformed.txt", *inputCloudTransformed);
   //plane definition
   pcl::ModelCoefficients::Ptr sectionCoefficients (new pcl::ModelCoefficients ());
   sectionCoefficients->values.resize (4);
@@ -91,7 +88,9 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
     pass.setFilterLimits (sectionCoefficients->values[3]-projDistance*k, sectionCoefficients->values[3]+projDistance*k);
     pass.filter (*cloudPassThrough);
     k++;
-  } while(cloudPassThrough->size() < 750);
+  } while(cloudPassThrough->size() < 700);
+
+    //pcl::io::savePCDFile("filter2.txt", *cloudPassThrough);
 
   // project the foil
   pcl::ModelCoefficients::Ptr projectionPlane (new pcl::ModelCoefficients ());
@@ -107,7 +106,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   proj.filter (*cloudPassThrough);
 
 
-  //pcl::io::savePCDFile("filter2.txt", *cloudPassThrough);
+  //pcl::io::savePCDFile("proj.txt", *cloudPassThrough);
 
   pcl::transformPointCloud (*cloudPassThrough, *cloudPassThrough, transform);
 
@@ -125,9 +124,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   }
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::CuttingDistance, cuttingDistance);
 
-  //pcl::io::savePCDFile("foil_new.txt", *foil->section);
   return foil;
-
 }
 
 Fuselage GeometryExtractor::sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, float cuttingDistance){
@@ -170,7 +167,7 @@ Fuselage GeometryExtractor::sectioningCloudY(pcl::PointCloud<pcl::PointXYZ>::Ptr
   fuselageSection.setFuselage(section);
   fuselageSection.computeFuselageParameter();
   fuselageSection.setAnyFuselageParameter(FuselageParameter::parameterType::CuttingDistance, cuttingDistance);
-  std::string name = "../Results/fuselage_" + std::to_string(cuttingDistance) + "mm.dat";
+  std::string name = "../Results/fuselage_" + std::to_string((int)cuttingDistance) + "mm.dat";
   fuselageSection.setName(name);
 
   return fuselageSection;
@@ -555,7 +552,7 @@ void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge,
   pcl::getMinMax3D(*inputCloud, min, max);
   if(abs(trailingEdge.y-max.y) < abs(trailingEdge.y-min.y)) {
     pass.setFilterFieldName ("y");
-    pass.setFilterLimits (FLT_MIN, trailingEdge.y-distanceFromTrailingEdge);
+    pass.setFilterLimits (-FLT_MAX, trailingEdge.y-distanceFromTrailingEdge);
     pass.filter (*inputCloud);
   }
   else {
