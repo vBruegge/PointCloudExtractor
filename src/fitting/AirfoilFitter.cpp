@@ -317,8 +317,8 @@ void AirfoilFitter::initiateFitting(std::string type) {
     foil.insert(foil.end(), newUpper.rbegin(), newUpper.rend());
     foil.insert(foil.end(), newLower.begin(), newLower.end());
 
-    /*io.writingPointCloud("../Results/" + name, foil);
-    io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
+    io.writingPointCloud("../Results/" + name, foil);
+    /*io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
     io.writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
     io.writingPointCloud("../Results/" + name + "_compare.txt", compare);
     io.writingPointCloud("../Results/" + name + "_lower.txt", lower);
