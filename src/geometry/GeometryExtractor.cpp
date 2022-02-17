@@ -743,7 +743,7 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
         break;
       }      
     }
-    if(abs(searchPoint.y - leadingEdge.y) < 0.1*lengthFoil) {
+    if(abs(searchPoint.y - leadingEdgePoint.y) < 0.1*lengthFoil) {
       std::cout << "Error: no reference found!";
       break;
     }

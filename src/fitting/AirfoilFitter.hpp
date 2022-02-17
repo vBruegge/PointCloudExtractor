@@ -64,7 +64,7 @@ private:
     bool checkPositionLeadingEdge(std::vector<Eigen::Vector2d>& points);
     long binomialCoeff(int n, int r);
     bool getBernsteinPolynomialCoeff(double xDc[], double yDc[], double coeff [], long binCoeff[], int degree, int numPoints);
-    double getBernsteinPolynomialValue(double x, double ySupports[], int degree, long binCoeff[], float trailingEdgeWidth);
+    double getBernsteinPolynomialValue(double xDc, double coeff[], int degree, long binCoeff[]);
     void downsizeAirfoil(std::vector<Eigen::Vector2d>& points);
 
     std::vector<Eigen::Vector2d> upper;
