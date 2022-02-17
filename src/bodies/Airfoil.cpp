@@ -128,7 +128,6 @@ void Airfoil::computeRotatedFlapPosition() {
 
 void Airfoil::setName(std::string& sectionType) {
     std::stringstream ss;
-    ss << std::setprecision(2);
     ss << "../Results/" << sectionType << airfoilParameters.cuttingDistance << "mm.dat";
 
     airfoilParameters.name = ss.str();
