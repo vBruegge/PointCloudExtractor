@@ -53,7 +53,7 @@ public:
      * @param trailingEdgeWidth width of the trailing edge
      * @return std::vector<Eigen::Vector2d> new points of the fitting
      */
-    std::vector<Eigen::Vector2d> bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points, float trailingEdgeWidth);
+    std::vector<Eigen::Vector2d> bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points);
 
     void replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile);
 
@@ -71,7 +71,6 @@ private:
     std::vector<Eigen::Vector2d> lower;
     std::vector<Eigen::Vector2d> compare;
     std::string name;
-    float trailingEdgeWidth;
     IOHandler io;
 };
 

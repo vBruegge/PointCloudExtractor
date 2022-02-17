@@ -26,7 +26,6 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
     splitAirfoil(points);
 
     name = params.name;
-    trailingEdgeWidth = params.trailingEdgeWidth;
 }
 
 void AirfoilFitter::computeCompareValues(Airfoil& foil) {
@@ -212,27 +211,29 @@ long AirfoilFitter::binomialCoeff(const int n, const int k) {
     return (long)(res + 0.01);
 }
 
-double AirfoilFitter::getBernsteinPolynomialValue(double xDc, double coeff[], int degree, long binCoeff[], float trailingEdgeWidthNormed) {
+double AirfoilFitter::getBernsteinPolynomialValue(double xDc, double coeff[], int degree, long binCoeff[]) {
     double yDc = 0;
     for(int i = 0; i <= degree; i++) {
         yDc += binCoeff[i]*std::pow(xDc,i)*std::pow(1-xDc, degree+1-i)*coeff[i]*std::sqrt(xDc);
     }
-    return yDc + trailingEdgeWidthNormed*xDc;
+    return yDc;
 }
 
-std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points, float trailingEdgeWidth) {
+std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points) {
     //fit gsl spline on curve
     int size = points.size();
     int min = 0;
     int max = points.size()-1;
     float maxDis = abs(points[min][0]-points[max][0]);
-    float trailingEdgeWidthNormed = trailingEdgeWidth/2/maxDis;
+    float trailingEdgeWidth = (points[max][1]-points[min][1])/maxDis;
+    if(abs(trailingEdgeWidth) < 5e-4)
+        trailingEdgeWidth = 0.0;
     double yDc[size], xDc[size];
 
     //scale to 1
     for(int i  = 0 ; i < size; i++) {
         //scale to 1 and translate to (0,0)
-        yDc[i] = (points[i][1]-points[max][1])/maxDis+trailingEdgeWidthNormed;
+        yDc[i] = (points[i][1]-points[min][1])/maxDis-trailingEdgeWidth;
         xDc[i] = (points[i][0]-points[min][0])/maxDis;
     }
     int degree = 8;
@@ -250,13 +251,15 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
     //saving smoothed points
     std::vector<Eigen::Vector2d> newPoints;
     size = 100;
+
     newPoints.push_back(Eigen::Vector2d(0,0));
     for(int i = 0; i < size; i++) {
         double xiDc = 0.5 - 0.5*cos((2*i-1)/(float)(2*size)*M_PI);
-        double yiDc = getBernsteinPolynomialValue(xiDc, coeff, degree, binCoeff, trailingEdgeWidthNormed);
+        double yiDc = getBernsteinPolynomialValue(xiDc, coeff, degree, binCoeff);
+        yiDc += trailingEdgeWidth;
         newPoints.push_back(Eigen::Vector2d(xiDc, yiDc));
     }
-    newPoints.push_back(Eigen::Vector2d(1, yDc[size-1]));
+    //newPoints.push_back(Eigen::Vector2d(1, trailingEdgeWidthNormed));
     return newPoints;
 }                                                                        
 
@@ -293,12 +296,13 @@ void AirfoilFitter::initiateFitting(std::string type) {
 
     sortUpperAndLowerHalves();
     orientFoil();
+    sortUpperAndLowerHalves();
 
     std::vector<Eigen::Vector2d> newUpper;
     std::vector<Eigen::Vector2d> newLower;
     if(type == "bernsteinPolynomial") {
-        newUpper = bernsteinPolynomialFit(upper, trailingEdgeWidth);
-        newLower = bernsteinPolynomialFit(lower, -trailingEdgeWidth);
+        newUpper = bernsteinPolynomialFit(upper);
+        newLower = bernsteinPolynomialFit(lower);
     }
     else if(type == "spline") {
         newUpper = splineInterpolation(upper);
