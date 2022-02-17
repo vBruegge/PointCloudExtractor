@@ -51,22 +51,19 @@ int main (int argc, char** argv)
         Fuselage section = extract.sectioningCloudY(fuselage, fuselageSections[i]);
         FuselageFitter fitFuselage(section);
         dataFuselage[i] = fitFuselage.superellipseFit();
-        std::cout << "Writing fuselage complete..\n";
+        std::cout << "Writing fuselage complete...\n";
     }
 
     std::ofstream aircraftDataFile;
     aircraftDataFile.open("../Results/aircraftDataFile.csv", std::fstream::out);
     io.writingFuselageDataInCSV(aircraftDataFile, dataFuselage, fuselageSections.size());
 
-    //sectioning the wing
-    bool flapRotationNeeded = true;
-    std::string flapRotated = argv[4];
-    if(flapRotated == "n")
-        flapRotationNeeded = false;
+    //sectioning wing
+    int sectioningType = std::stoi(argv[4]);
     AirfoilParameter dataWing[wingSections.size()];
-    std::string sectionType ="wing";
+    std::string sectionType = "wing";
     for(int i = 0; i < wingSections.size(); i++) {
-        Airfoil section = extract.sectioningCloudX(wing, wingSections[i], flapRotationNeeded);
+        Airfoil section = extract.sectioningCloudX(wing, wingSections[i], sectioningType);
         extract.translateSection(section);
         extract.derotateSection(section);
         int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
@@ -80,7 +77,7 @@ int main (int argc, char** argv)
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.initiateFitting();
         dataWing[i] = section.getAirfoilParameter();
-        std::cout << "Writing wing complete..\n";
+        std::cout << "Writing wing complete...\n";
     }
 
     io.writingWingDataInCSV(aircraftDataFile, dataWing, sectionType, wingSections.size());
@@ -89,7 +86,7 @@ int main (int argc, char** argv)
     AirfoilParameter dataHTail[horizontalTailSections.size()];
     sectionType = "horizontal_tail";
     for(int i = 0; i < horizontalTailSections.size(); i++) {
-        Airfoil section = extract.sectioningCloudX(horizontalTail, horizontalTailSections[i], flapRotationNeeded);
+        Airfoil section = extract.sectioningCloudX(horizontalTail, horizontalTailSections[i], sectioningType);
         extract.translateSection(section);
         extract.derotateSection(section);
         int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
@@ -103,7 +100,7 @@ int main (int argc, char** argv)
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.initiateFitting();
         dataHTail[i] = section.getAirfoilParameter();
-        std::cout << "Writing horizontal tail complete..\n";
+        std::cout << "Writing horizontal tail complete...\n";
     }
 
     io.writingWingDataInCSV(aircraftDataFile, dataHTail, sectionType, horizontalTailSections.size());
@@ -112,7 +109,7 @@ int main (int argc, char** argv)
     AirfoilParameter dataVTail[verticalTailSections.size()];
     sectionType = "vertical_tail";
     for(int i = 0; i < verticalTailSections.size(); i++) {
-        Airfoil section = extract.sectioningCloudZ(verticalTail, verticalTailSections[i], flapRotationNeeded);
+        Airfoil section = extract.sectioningCloudZ(verticalTail, verticalTailSections[i], sectioningType);
         extract.translateSection(section);
         extract.derotateSection(section);
         int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
@@ -126,7 +123,7 @@ int main (int argc, char** argv)
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.initiateFitting();
         dataVTail[i] = section.getAirfoilParameter();
-        std::cout << "Writing vertical tail complete..\n";
+        std::cout << "Writing vertical tail complete...\n";
     }
 
     io.writingWingDataInCSV(aircraftDataFile, dataVTail, sectionType, verticalTailSections.size());

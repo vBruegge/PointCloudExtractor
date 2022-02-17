@@ -23,6 +23,17 @@ public:
         TrailingEdgeWidth, PosLeadingEdgeX, PosLeadingEdgeY, PosLeadingEdgeZ};
 };
 
+class MorphingWingParameter {
+public:
+    std::string name;
+    float cuttingDistance;
+    int indexFirstReference;
+    int indexSecondReference;
+    float scale;
+    float rotationAngle;
+    enum parameterType {CuttingDistance, IndexFirstReference, IndexSecondReference, Scale, RotationAngle};
+};
+
 class Airfoil {
 public:
     /**
@@ -32,6 +43,8 @@ public:
      * @param parameters_ known airfoil parameter (e.g. chord)
      */
     Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_);
+
+    Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, MorphingWingParameter& parameters_);
 
     Airfoil() = default;
 
@@ -55,6 +68,28 @@ public:
      * @return AirfoilParameter known parameter
      */
     AirfoilParameter getAirfoilParameter();
+
+    /**
+     * @brief Get the Morphing Wing Parameter object
+     * 
+     * @return MorphingWingParameter  known parameter
+     */
+    MorphingWingParameter getMorphingWingParameter();
+
+    /**
+     * @brief Set the one of the Morphing Wing Parameter
+     * 
+     * @param type parameter type (CuttingDistance, Scale, RotationAnge...)
+     * @param value value of the parameter
+     */
+    void setAnyMorphingWingParameter(MorphingWingParameter::parameterType type, float value);
+
+    /**
+     * @brief replace all Morphing Wing parameters with new ones
+     * 
+     * @param parameters_ new parameters
+     */
+    void setAllMorphingWingParameter(MorphingWingParameter& parameter_);
 
     /**
      * @brief Set the one of the Airfoil Parameter
@@ -85,7 +120,9 @@ public:
      * @param sectionType type of the section (e.g. wing/horizontal_tail...)
      * @param firstLeadingEdgePos position of the leading edge of the first section made
      */
-    void generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ firstLeadingEdgePos);
+    void generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection);
+
+    void deleteMorphingWingReferences(float widthReferences);
     
 private:
     int findTrailingEdge();
@@ -97,7 +134,8 @@ private:
     void computeRotatedFlapPosition();
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr foil;
-    AirfoilParameter parameters;
+    AirfoilParameter airfoilParameters;
+    MorphingWingParameter morphingWingParameters;
 };
 
 #endif

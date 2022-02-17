@@ -31,10 +31,19 @@ public:
     void writingWingDataInCSV( std::ofstream& outStream, AirfoilParameter data[], std::string& sectionType, int length);
 
     /**
+     * @brief writes a CSV file with all morphing wing parameters
+     * 
+     * @param outStream filestream
+     * @param data extracted geometries of the morphing wing sections
+     * @param length number of sections of the morphing wing
+     */
+    void writingMorphingWingDataInCSV( std::ofstream& outStream, MorphingWingParameter data[], int length);
+
+    /**
      * @brief writes a CSV file with all fuselage parameters
      * 
      * @param outStream filestream
-     * @param data exctracted geometries of the airfoil sections
+     * @param data exctracted geometries of the fuselage sections
      * @param length number of sections of the fuselage
      */
     void writingFuselageDataInCSV(std::ofstream& outStream, FuselageParameter data[], int length);
@@ -58,6 +67,8 @@ public:
      * @param filename name of the TXT file
      */
     void convertTXTToPCDFile(std::string& filename);
+
+    std::vector<Eigen::Vector2d> readAirfoilDATFile(const std::string& filename);
 
 private:
     void readLineInVector(std::string& line, std::string& type, std::vector<float>& sections);

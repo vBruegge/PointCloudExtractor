@@ -35,7 +35,12 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*inputCloud, minPt, maxPt);
     float sectionDisX = 15;
-    int iterator = abs(maxPt.y-minPt.y) / sectionDisX + 2;
+    float dis = 5;
+    if(abs(maxPt.y-minPt.y) < 1) {
+        sectionDisX = 0.1;
+        dis = 0.05;
+    }
+    int iterator = abs((maxPt.y-minPt.y)) / sectionDisX + 2;
     std::vector<Eigen::Vector2d> compare_(iterator);
     pcl::PointXYZ leadingEdge = inputCloud->points[indexLeadingTrailingEdge[0]];
     pcl::PointXYZ trailingEdge = inputCloud->points[indexLeadingTrailingEdge[1]];
@@ -44,10 +49,10 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     if(leadingEdge.y < trailingEdge.y) {
       compare_[0] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
       beginSection = leadingEdge.y;
-      compare_[iterator-1] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-0.5);
+      compare_[iterator-1] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-dis*1e-2);
     }
     else {
-      compare_[0] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-0.5);
+      compare_[0] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-dis*1e-2);
       beginSection = trailingEdge.y;
       compare_[iterator-1] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
     }
@@ -58,7 +63,7 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     for(int i = 1; i < iterator-1; i++) {
       pass.setInputCloud (inputCloud);
       pass.setFilterFieldName ("y");
-      pass.setFilterLimits (beginSection + i*sectionDisX - 5, beginSection + i*sectionDisX + 5);
+      pass.setFilterLimits (beginSection + i*sectionDisX - dis, beginSection + i*sectionDisX + dis);
       pass.filter (*cloudPassThrough);
 
       pcl::getMinMax3D(*cloudPassThrough, minPt, maxPt);
@@ -68,7 +73,7 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     compare = compare_;
 }
 
-void AirfoilFitter::splitAirfoil(std::vector<Eigen::Vector2d> points) {
+void AirfoilFitter::splitAirfoil(std::vector<Eigen::Vector2d>& points) {
     int compareIndex = compare.size()-1;
 
     std::vector<Eigen::Vector2d> tmpUpper, tmpLower;
@@ -133,10 +138,7 @@ bool AirfoilFitter::checkIfFoilUpsideDown() {
         if(abs(min - compare[i][1]) > abs(min-max))
             max = compare[i][1];
     }
-    if(min > max && abs(min-max) > 1) {
-        return true;
-    }
-    if(min > max && abs(min-max) > 1) {
+    if(min > max) {
         return true;
     }
     else {
@@ -318,9 +320,59 @@ void AirfoilFitter::initiateFitting(std::string type) {
     foil.insert(foil.end(), newLower.begin(), newLower.end());
 
     io.writingPointCloud("../Results/" + name, foil);
+    /*writingPointCloud("../Results/" + name + "_upper.txt", upper);
+    writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
+    writingPointCloud("../Results/" + name + "_compare.txt", compare);
+    writingPointCloud("../Results/" + name + "_lower.txt", lower);
+    writingPointCloud("../Results/" + name + "_newLower.txt", newLower);*/
+}
+
+void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile) {
+    sortUpperAndLowerHalves();
     /*io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
-    io.writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
-    io.writingPointCloud("../Results/" + name + "_compare.txt", compare);
     io.writingPointCloud("../Results/" + name + "_lower.txt", lower);
-    io.writingPointCloud("../Results/" + name + "_newLower.txt", newLower);*/
+    io.writingPointCloud("../Results/" + name + "_compare.txt", compare);*/
+    if(checkIfFoilUpsideDown() == true) {
+        for(int i = 0; i < upper.size(); i++) {
+            upper[i][1] = -upper[i][1]-abs(2*upper[upper.size()-5][1]);
+        }
+        for(int i = 0; i < lower.size(); i++) {
+            lower[i][1] = -lower[i][1]-abs(2*upper[upper.size()-5][1]);
+        }
+    }
+    if(upper.size() > 100) {
+        downsizeAirfoil(upper);
+    }
+    if(lower.size() > 100) {
+        downsizeAirfoil(lower);
+    }
+
+    float maxX = upper[upper.size()-1][0];
+    for(int i = 0; i < referenceProfile.size(); i++) {
+        if(referenceProfile[i][0] > maxX && i < referenceProfile.size() / 2) {
+            upper.push_back(referenceProfile[i]);
+        }
+        else if(referenceProfile[i][0] > maxX && i > referenceProfile.size() / 2) {
+            lower.push_back(referenceProfile[i]);
+        }
+    }
+    std::vector<Eigen::Vector2d> foil;
+    foil.insert(foil.end(), upper.rbegin(), upper.rend());
+    foil.insert(foil.end(), lower.begin(), lower.end());
+
+    io.writingPointCloud("../Results/" + name, foil);
+}
+
+void AirfoilFitter::downsizeAirfoil(std::vector<Eigen::Vector2d>& points) {
+    int add = points.size()/100 + 10;
+    std::vector<Eigen::Vector2d> newPoints;
+    for(int i = 0; i < points.size(); i+=add) {
+        if(points[i][0] < 0.1) {
+            newPoints.insert(newPoints.end(), points.begin()+i, points.begin()+i+add);
+        }
+        else {
+            newPoints.push_back(points[i]);
+        }
+    }
+    points = newPoints;
 }
