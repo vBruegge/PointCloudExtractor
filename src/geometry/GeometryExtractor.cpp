@@ -677,7 +677,7 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
   //find position of the trailingEdge
   Airfoil foil;
   foil.setFoil(cloudNoNormals);
-  std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(cloudNoNormals);
+  std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge();
   int indexLeadingEdge = indexLeadingTrailingEdge[0];
   int indexTrailingEdge = indexLeadingTrailingEdge[1];
   pcl::PointNormal trailingEdgePoint = inputCloud->points[indexLeadingTrailingEdge[1]];
@@ -767,7 +767,7 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
 void GeometryExtractor::translateSectionToReference(Airfoil& foil, pcl::PointXYZ reference) {
   //translates center of the Point Cloud to Reference Point
   pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
-  std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(inputCloud);
+  std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge();
   if(inputCloud->points[indexLeadingTrailingEdge[0]].y > inputCloud->points[indexLeadingTrailingEdge[1]].y) {
     for(int i = 0; i < inputCloud->points.size(); i++) {
         inputCloud->points[i].y = -inputCloud->points[i].y;

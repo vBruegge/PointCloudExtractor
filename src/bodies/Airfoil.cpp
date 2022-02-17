@@ -61,6 +61,12 @@ void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float
     case AirfoilParameter::TrailingEdgeWidth:
         airfoilParameters.trailingEdgeWidth = value;
         break;
+        case AirfoilParameter::PosLeadingEdgeX:
+        airfoilParameters.posLeadingEdge.x = value;
+    case AirfoilParameter::PosLeadingEdgeY:
+        airfoilParameters.posLeadingEdge.y = value;
+    case AirfoilParameter::PosLeadingEdgeZ:
+        airfoilParameters.posLeadingEdge.z = value;
     default:
         break;
     }
@@ -84,12 +90,6 @@ void Airfoil::setAnyMorphingWingParameter(MorphingWingParameter::parameterType t
     case MorphingWingParameter::parameterType::RotationAngle:
         morphingWingParameters.rotationAngle = value;
         break;
-    case AirfoilParameter::PosLeadingEdgeX:
-        parameters.posLeadingEdge.x = value;
-    case AirfoilParameter::PosLeadingEdgeY:
-        parameters.posLeadingEdge.y = value;
-    case AirfoilParameter::PosLeadingEdgeZ:
-        parameters.posLeadingEdge.z = value;
     default:
         break;
     }
@@ -136,11 +136,12 @@ void Airfoil::setName(std::string& sectionType) {
 
 void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ posFirstLeadingEdge) {
 
-    airfoilParameters.offset = computeOffsetFromFirstSection(foil, offsetFirstPoint); //offset in mm
-    airfoilParameters.sweep = std::atan2(airfoilParameters.offset, (airfoilParameters.cuttingDistance - firstSection))*180.0/M_PI;
+    float leadingEdge = foil->points[findLeadingTrailingEdge()[0]].y;
+    airfoilParameters.offset = posFirstLeadingEdge.y - leadingEdge; //offset in mm
+    airfoilParameters.sweep = std::atan2(airfoilParameters.offset, (airfoilParameters.cuttingDistance - posFirstLeadingEdge.x))*180.0/M_PI;
     
     setName(sectionType);
-    if(parameters.flapPosition != 0)
+    if(airfoilParameters.flapPosition != 0)
         computeRotatedFlapPosition();
 }
 
@@ -208,7 +209,7 @@ int Airfoil::findTrailingEdge() {
 }
 
 void Airfoil::deleteMorphingWingReferences(float widthReferences) {
-    int indexTrailingEdge = findTrailingEdge(foil);
+    int indexTrailingEdge = findTrailingEdge();
     pcl::PointXYZ trailingEdgePoint = foil->points[indexTrailingEdge];
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr upper(new pcl::PointCloud<pcl::PointXYZ>);
