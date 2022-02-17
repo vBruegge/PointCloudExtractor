@@ -31,7 +31,7 @@ AirfoilFitter::AirfoilFitter(Airfoil& foil) {
 void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     //calculate approximative skeleton line of the foil
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = foil.getFoil();
-    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge(inputCloud);
+    std::vector<int> indexLeadingTrailingEdge = foil.findLeadingTrailingEdge();
     pcl::PointXYZ maxPt, minPt;
     pcl::getMinMax3D (*inputCloud, minPt, maxPt);
     float sectionDisX = 15;
@@ -297,6 +297,12 @@ void AirfoilFitter::initiateFitting(std::string type) {
     sortUpperAndLowerHalves();
     orientFoil();
     sortUpperAndLowerHalves();
+    float disX = abs(upper[0][1]-lower[0][1]);
+    if(disX > 1) {
+        Eigen::Vector2d center = Eigen::Vector2d(std::min(upper[0][0],lower[0][0]), (upper[0][1]+lower[0][1])/2);
+        lower.insert(lower.begin(), center);
+        upper.insert(upper.begin(), center);
+    }
 
     std::vector<Eigen::Vector2d> newUpper;
     std::vector<Eigen::Vector2d> newLower;

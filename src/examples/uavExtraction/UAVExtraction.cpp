@@ -51,7 +51,7 @@ int main (int argc, char** argv)
         Fuselage section = extract.sectioningCloudY(fuselage, fuselageSections[i]);
         FuselageFitter fitFuselage(section);
         dataFuselage[i] = fitFuselage.superellipseFit();
-        std::cout << "Writing fuselage complete..";
+        std::cout << "Writing fuselage complete..\n";
     }
 
     std::ofstream aircraftDataFile;
@@ -66,13 +66,13 @@ int main (int argc, char** argv)
         Airfoil section = extract.sectioningCloudX(wing, wingSections[i], sectioningType);
         extract.translateSection(section);
         extract.derotateSection(section);
-        int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
+        int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, 0.5);
         if(i == 0) {
-            section.generateMissingAirfoilParameter(sectionType, 0, wingSections[i]);
+            section.generateMissingAirfoilParameter(sectionType, section.getAirfoilParameter().posLeadingEdge);
         }
         else {
-            section.generateMissingAirfoilParameter(sectionType, dataWing[0].offset, dataWing[0].cuttingDistance);
+            section.generateMissingAirfoilParameter(sectionType, dataWing[0].posLeadingEdge);
         }
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.initiateFitting();
@@ -89,13 +89,13 @@ int main (int argc, char** argv)
         Airfoil section = extract.sectioningCloudX(horizontalTail, horizontalTailSections[i], sectioningType);
         extract.translateSection(section);
         extract.derotateSection(section);
-        int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
+        int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, 0.5);
         if(i == 0) {
-            section.generateMissingAirfoilParameter(sectionType, 0, horizontalTailSections[i]);
+            section.generateMissingAirfoilParameter(sectionType, section.getAirfoilParameter().posLeadingEdge);
         }
         else {
-            section.generateMissingAirfoilParameter(sectionType, dataHTail[0].offset, dataHTail[0].cuttingDistance);
+            section.generateMissingAirfoilParameter(sectionType, dataHTail[0].posLeadingEdge);
         }
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.initiateFitting();
@@ -112,13 +112,13 @@ int main (int argc, char** argv)
         Airfoil section = extract.sectioningCloudZ(verticalTail, verticalTailSections[i], sectioningType);
         extract.translateSection(section);
         extract.derotateSection(section);
-        int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
+        int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, 0.5);
         if(i == 0) {
-            section.generateMissingAirfoilParameter(sectionType, 0, verticalTailSections[i]);
+            section.generateMissingAirfoilParameter(sectionType, section.getAirfoilParameter().posLeadingEdge);
         }
         else {
-            section.generateMissingAirfoilParameter(sectionType, dataVTail[0].offset, dataVTail[0].cuttingDistance);
+            section.generateMissingAirfoilParameter(sectionType, dataVTail[0].posLeadingEdge);
         }
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.initiateFitting();
