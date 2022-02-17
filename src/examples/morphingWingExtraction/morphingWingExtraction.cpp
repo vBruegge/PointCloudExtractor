@@ -35,8 +35,8 @@ int main (int argc, char** argv)
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances
-    float xPosFirstReference = 1-0.194;
-    float xPosSecondReference = 1-0.593;
+    float xPosFirstReference = 0.8;
+    float xPosSecondReference = 0.4;
     pcl::PointXYZ firstReference, secondReference;
     for(int i = reference.size()/2; i < reference.size(); i++) {
         if(abs(reference[i][0]-xPosFirstReference) < 0.01) {
@@ -60,7 +60,7 @@ int main (int argc, char** argv)
         extract.derotateToReferencePoints(section, firstReference, secondReference);
         data[i] = section.getMorphingWingParameter();
         int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
-        extract.deleteTrailingEdge(section, indexTrailingEdge, positionFlap);
+        extract.deleteTrailingEdge(section, indexTrailingEdge, 1-positionFlap);
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.replaceMorphedFlap(reference);
     }

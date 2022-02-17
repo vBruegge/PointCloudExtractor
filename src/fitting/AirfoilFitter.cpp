@@ -74,7 +74,7 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     compare = compare_;
 }
 
-void AirfoilFitter::splitAirfoil(std::vector<Eigen::Vector2d> points) {
+void AirfoilFitter::splitAirfoil(std::vector<Eigen::Vector2d>& points) {
     int compareIndex = compare.size()-1;
 
     std::vector<Eigen::Vector2d> tmpUpper, tmpLower;
@@ -319,9 +319,9 @@ void AirfoilFitter::initiateFitting(std::string type) {
 
 void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile) {
     sortUpperAndLowerHalves();
-    io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
+    /*io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
     io.writingPointCloud("../Results/" + name + "_lower.txt", lower);
-    io.writingPointCloud("../Results/" + name + "_compare.txt", compare);
+    io.writingPointCloud("../Results/" + name + "_compare.txt", compare);*/
     if(checkIfFoilUpsideDown() == true) {
         for(int i = 0; i < upper.size(); i++) {
             upper[i][1] = -upper[i][1]-abs(2*upper[upper.size()-5][1]);
@@ -329,6 +329,12 @@ void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referencePr
         for(int i = 0; i < lower.size(); i++) {
             lower[i][1] = -lower[i][1]-abs(2*upper[upper.size()-5][1]);
         }
+    }
+    if(upper.size() > 100) {
+        downsizeAirfoil(upper);
+    }
+    if(lower.size() > 100) {
+        downsizeAirfoil(lower);
     }
 
     float maxX = upper[upper.size()-1][0];
@@ -345,4 +351,18 @@ void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referencePr
     foil.insert(foil.end(), lower.begin(), lower.end());
 
     io.writingPointCloud("../Results/" + name, foil);
+}
+
+void AirfoilFitter::downsizeAirfoil(std::vector<Eigen::Vector2d>& points) {
+    int add = points.size()/100 + 10;
+    std::vector<Eigen::Vector2d> newPoints;
+    for(int i = 0; i < points.size(); i+=add) {
+        if(points[i][0] < 0.1) {
+            newPoints.insert(newPoints.end(), points.begin()+i, points.begin()+i+add);
+        }
+        else {
+            newPoints.push_back(points[i]);
+        }
+    }
+    points = newPoints;
 }
