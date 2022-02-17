@@ -9,8 +9,13 @@
 
 Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_) {
     foil = foil_;
-    parameters = parameters_;
+    airfoilParameters = parameters_;
     computeChordLength();  
+}
+
+Airfoil::Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, MorphingWingParameter& parameters_) {
+    foil = foil_;
+    morphingWingParameters = parameters_; 
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr Airfoil::getFoil() {
@@ -22,35 +27,62 @@ void Airfoil::setFoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_) {
 }
 
 AirfoilParameter Airfoil::getAirfoilParameter() {
-    return parameters;
+    return airfoilParameters;
+}
+
+MorphingWingParameter Airfoil::getMorphingWingParameter() {
+    return morphingWingParameters;
 }
 
 void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float value) {
     switch (type)
     {
     case AirfoilParameter::Dihedral:
-        parameters.dihedral = value;
+        airfoilParameters.dihedral = value;
         break;
     case AirfoilParameter::Twist:
-        parameters.twist = value;
+        airfoilParameters.twist = value;
         break;
     case AirfoilParameter::CuttingDistance:
-        parameters.cuttingDistance = value;
+        airfoilParameters.cuttingDistance = value;
         break;
     case AirfoilParameter::ChordLength:
-        parameters.chordLength = value;
+        airfoilParameters.chordLength = value;
         break;
     case AirfoilParameter::FlapPosition:
-        parameters.flapPosition = value;
+        airfoilParameters.flapPosition = value;
         break;
     case AirfoilParameter::Offset:
-        parameters.offset = value;
+        airfoilParameters.offset = value;
         break;
     case AirfoilParameter::Sweep:
-        parameters.sweep = value;
+        airfoilParameters.sweep = value;
         break;
     case AirfoilParameter::TrailingEdgeWidth:
-        parameters.trailingEdgeWidth = value;
+        airfoilParameters.trailingEdgeWidth = value;
+        break;
+    default:
+        break;
+    }
+}
+
+void Airfoil::setAnyMorphingWingParameter(MorphingWingParameter::parameterType type, float value) {
+    switch (type)
+    {
+    case MorphingWingParameter::parameterType::CuttingDistance:
+        morphingWingParameters.cuttingDistance = value;
+        break;
+    case MorphingWingParameter::parameterType::IndexFirstReference:
+        morphingWingParameters.indexFirstReference = (int)value;
+        break;
+    case MorphingWingParameter::parameterType::IndexSecondReference:
+        morphingWingParameters.indexSecondReference = (int)value;
+        break;
+    case MorphingWingParameter::parameterType::Scale:
+        morphingWingParameters.scale = value;
+        break;
+    case MorphingWingParameter::parameterType::RotationAngle:
+        morphingWingParameters.rotationAngle = value;
         break;
     case AirfoilParameter::PosLeadingEdgeX:
         parameters.posLeadingEdge.x = value;
@@ -64,14 +96,18 @@ void Airfoil::setAnyAirfoilParameter(AirfoilParameter::parameterType type, float
 }
 
 void Airfoil::setAllAirfoilParameter(AirfoilParameter& parameters_) {
-    parameters = parameters_;
+    airfoilParameters = parameters_;
+}
+
+void Airfoil::setAllMorphingWingParameter(MorphingWingParameter& parameters_) {
+    morphingWingParameters = parameters_;
 }
 
 void Airfoil::computeChordLength(){
   pcl::PointXYZ minPt, maxPt;
   pcl::getMinMax3D (*foil, minPt, maxPt);
 
-  parameters.chordLength = std::abs(minPt.y-maxPt.y);
+  airfoilParameters.chordLength = std::abs(minPt.y-maxPt.y);
 }
 
 void Airfoil::computeRotatedFlapPosition() {
@@ -83,8 +119,8 @@ void Airfoil::computeRotatedFlapPosition() {
 
   float maxDis = sqrt(pow(minPt.y-maxPt.y, 2)+pow(minPt.z-maxPt.z, 2)+pow(minPt.x-maxPt.x,2));
 
-  AirfoilParameter parameters = getAirfoilParameter();
-  float flap = maxDis/2 + parameters.flapPosition/cos(parameters.twist);
+  AirfoilParameter airfoilParameters = getAirfoilParameter();
+  float flap = maxDis/2 + airfoilParameters.flapPosition/cos(airfoilParameters.twist);
 
   float flapPos = flap / maxDis;
   setAnyAirfoilParameter(AirfoilParameter::parameterType::FlapPosition, flapPos);
@@ -92,15 +128,16 @@ void Airfoil::computeRotatedFlapPosition() {
 
 void Airfoil::setName(std::string& sectionType) {
     std::stringstream ss;
-    ss << "../Results/" << sectionType << "_" << parameters.cuttingDistance << "mm.dat";
+    ss << std::setprecision(2);
+    ss << "../Results/" << sectionType << airfoilParameters.cuttingDistance << "mm.dat";
 
-    parameters.name = ss.str();
+    airfoilParameters.name = ss.str();
 }
 
 void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ posFirstLeadingEdge) {
 
-    parameters.offset = posFirstLeadingEdge.y-parameters.posLeadingEdge.y;
-    parameters.sweep = std::atan2(parameters.offset, (parameters.cuttingDistance - posFirstLeadingEdge.x))*180.0/M_PI;
+    airfoilParameters.offset = computeOffsetFromFirstSection(foil, offsetFirstPoint); //offset in mm
+    airfoilParameters.sweep = std::atan2(airfoilParameters.offset, (airfoilParameters.cuttingDistance - firstSection))*180.0/M_PI;
     
     setName(sectionType);
     if(parameters.flapPosition != 0)
@@ -168,4 +205,74 @@ int Airfoil::findTrailingEdge() {
 
   //std::cout << inputCloud->points[indexTrailingEdge].x << " "  << inputCloud->points[indexTrailingEdge].y << " " << inputCloud->points[indexTrailingEdge].z << std::endl;
   return indexTrailingEdge;
+}
+
+void Airfoil::deleteMorphingWingReferences(float widthReferences) {
+    int indexTrailingEdge = findTrailingEdge(foil);
+    pcl::PointXYZ trailingEdgePoint = foil->points[indexTrailingEdge];
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr upper(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr lower(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud (foil);
+    pass.setFilterFieldName ("z");
+    pass.setFilterLimits (trailingEdgePoint.z, FLT_MAX);
+    pass.filter (*upper);
+    pass.setFilterLimits (-FLT_MAX, trailingEdgePoint.z);
+    pass.filter (*lower);
+    pcl::PointXYZ minUpper, maxUpper, minLower, maxLower;
+    pcl::getMinMax3D(*upper, minUpper, maxUpper);
+    pcl::getMinMax3D(*lower, minLower, maxLower);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr save(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr leftSide(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr rightSide(new pcl::PointCloud<pcl::PointXYZ>);
+    if(abs(minUpper.z-maxUpper.z) > abs(minLower.z-maxLower.z)) {
+        pass.setInputCloud(lower);
+        save = upper;
+    }
+    else {
+        pass.setInputCloud(upper);
+        save = lower;
+    }
+
+    pcl::PointXYZ firstReference = foil->points[morphingWingParameters.indexFirstReference];
+    pcl::PointXYZ secondReference = foil->points[morphingWingParameters.indexSecondReference];
+    pcl::PointCloud<pcl::PointXYZ>::Ptr deleted(new pcl::PointCloud<pcl::PointXYZ>);
+
+    pass.setFilterFieldName("y");
+    if(firstReference.y < trailingEdgePoint.y) {
+        pass.setFilterLimits(firstReference.y+0.25, FLT_MAX);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(-FLT_MAX, firstReference.y-0.25-widthReferences);
+        pass.filter(*leftSide);
+        pcl::concatenate(*leftSide, *rightSide, *deleted);
+        pass.setInputCloud(deleted);
+        pass.setFilterLimits(secondReference.y+0.25, FLT_MAX);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(-FLT_MAX, secondReference.y-0.25-widthReferences);
+        pass.filter(*leftSide);
+    }
+    else {
+        pass.setFilterLimits(-FLT_MAX, firstReference.y-0.25);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(firstReference.y+0.25+widthReferences, FLT_MAX);
+        pass.filter(*leftSide);
+        pcl::concatenate(*leftSide, *rightSide, *deleted);
+        pass.setInputCloud(deleted);
+        pass.setFilterLimits(-FLT_MAX, secondReference.y-0.25);
+        pass.filter(*rightSide);
+        pass.setFilterLimits(secondReference.y+0.25+widthReferences, FLT_MAX);
+        pass.filter(*leftSide);
+    }
+    pcl::concatenate(*leftSide, *rightSide, *deleted);
+    pcl::concatenate(*deleted, *save, *foil);
+
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud (foil);
+    std::vector<int> pointIndexSearch(1);
+    std::vector<float> pointDistanceSearch(1);
+    kdtree.nearestKSearch (firstReference, 1, pointIndexSearch, pointDistanceSearch);
+    morphingWingParameters.indexFirstReference = pointIndexSearch[0];
+    kdtree.nearestKSearch (secondReference, 1, pointIndexSearch, pointDistanceSearch);
+    morphingWingParameters.indexSecondReference = pointIndexSearch[0];
 }
