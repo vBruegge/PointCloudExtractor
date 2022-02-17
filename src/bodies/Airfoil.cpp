@@ -128,15 +128,14 @@ void Airfoil::computeRotatedFlapPosition() {
 
 void Airfoil::setName(std::string& sectionType) {
     std::stringstream ss;
-    ss << "../Results/" << sectionType << airfoilParameters.cuttingDistance << "mm.dat";
+    ss << "../Results/" << sectionType << "_" << airfoilParameters.cuttingDistance << "mm.dat";
 
     airfoilParameters.name = ss.str();
 }
 
 void Airfoil::generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ posFirstLeadingEdge) {
 
-    float leadingEdge = foil->points[findLeadingTrailingEdge()[0]].y;
-    airfoilParameters.offset = posFirstLeadingEdge.y - leadingEdge; //offset in mm
+    airfoilParameters.offset = posFirstLeadingEdge.y - airfoilParameters.posLeadingEdge.y; //offset in mm
     airfoilParameters.sweep = std::atan2(airfoilParameters.offset, (airfoilParameters.cuttingDistance - posFirstLeadingEdge.x))*180.0/M_PI;
     
     setName(sectionType);
