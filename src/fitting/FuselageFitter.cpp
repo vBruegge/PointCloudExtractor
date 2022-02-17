@@ -48,6 +48,7 @@ FuselageParameter FuselageFitter::superellipseFit() {
         points[i][0] = section.getFuselage()->points[i].x - params.xM;
         points[i][1] = section.getFuselage()->points[i].z - params.yM;
     }
+    io.writingPointCloud(params.name + "_scan.txt", points);
 
     int iterate = 0;
     double fittedQuality;

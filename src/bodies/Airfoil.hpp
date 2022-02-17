@@ -120,7 +120,7 @@ public:
      * @param sectionType type of the section (e.g. wing/horizontal_tail...)
      * @param firstLeadingEdgePos position of the leading edge of the first section made
      */
-    void generateMissingAirfoilParameter(std::string& sectionType, float offsetFirstPoint, float firstSection);
+    void generateMissingAirfoilParameter(std::string& sectionType, pcl::PointXYZ firstLeadingEdgePos);
 
     void deleteMorphingWingReferences(float widthReferences);
     
