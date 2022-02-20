@@ -226,14 +226,13 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
     int max = points.size()-1;
     float maxDis = abs(points[min][0]-points[max][0]);
     float trailingEdgeWidth = (points[max][1]-points[min][1])/maxDis;
-    if(abs(trailingEdgeWidth) < 5e-4)
-        trailingEdgeWidth = 0.0;
-    double yDc[size], xDc[size];
+    double yDc[size], xDc[size], yDcTranslated[size];
 
     //scale to 1
     for(int i  = 0 ; i < size; i++) {
         //scale to 1 and translate to (0,0)
-        yDc[i] = (points[i][1]-points[min][1])/maxDis-trailingEdgeWidth;
+        yDc[i] = (points[i][1]-points[min][1])/maxDis;
+        yDcTranslated[i] = yDc[i]-trailingEdgeWidth;
         xDc[i] = (points[i][0]-points[min][0])/maxDis;
     }
     int degree = 8;
@@ -247,6 +246,8 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
     //get the coefficients for the bernstein polynomal fitting function
     double coeff[degree+1];
     getBernsteinPolynomialCoeff(xDc, yDc, coeff, binCoeff, degree, size);
+    double coeffTranslated[degree+1];
+    getBernsteinPolynomialCoeff(xDc, yDcTranslated, coeffTranslated, binCoeff, degree, size);
 
     //saving smoothed points
     std::vector<Eigen::Vector2d> newPoints;
@@ -255,8 +256,15 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
     newPoints.push_back(Eigen::Vector2d(0,0));
     for(int i = 0; i < size; i++) {
         double xiDc = 0.5 - 0.5*cos((2*i-1)/(float)(2*size)*M_PI);
-        double yiDc = getBernsteinPolynomialValue(xiDc, coeff, degree, binCoeff);
-        yiDc += trailingEdgeWidth;
+        double yiDc;
+        if(trailingEdgeWidth > 5e-4 && xiDc > 0.5) {
+            yiDc = getBernsteinPolynomialValue(xiDc, coeffTranslated, degree, binCoeff);
+            yiDc += trailingEdgeWidth;
+        }
+        else {
+            yiDc = getBernsteinPolynomialValue(xiDc, coeff, degree, binCoeff);
+        }
+        
         newPoints.push_back(Eigen::Vector2d(xiDc, yiDc));
     }
     //newPoints.push_back(Eigen::Vector2d(1, trailingEdgeWidthNormed));
@@ -340,23 +348,25 @@ void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referencePr
             lower[i][1] = -lower[i][1]-abs(2*upper[upper.size()-5][1]);
         }
     }
-    if(upper.size() > 100) {
+    /*if(upper.size() > 100) {
         downsizeAirfoil(upper);
     }
     if(lower.size() > 100) {
         downsizeAirfoil(lower);
-    }
+    }*/
 
     float maxX = upper[upper.size()-1][0];
+    std::vector<Eigen::Vector2d> tmp;
     for(int i = 0; i < referenceProfile.size(); i++) {
         if(referenceProfile[i][0] > maxX && i < referenceProfile.size() / 2) {
-            upper.push_back(referenceProfile[i]);
+            tmp.push_back(referenceProfile[i]);
         }
         else if(referenceProfile[i][0] > maxX && i > referenceProfile.size() / 2) {
             lower.push_back(referenceProfile[i]);
         }
     }
     std::vector<Eigen::Vector2d> foil;
+    foil.insert(foil.end(), tmp.begin(), tmp.end());
     foil.insert(foil.end(), upper.rbegin(), upper.rend());
     foil.insert(foil.end(), lower.begin(), lower.end());
 

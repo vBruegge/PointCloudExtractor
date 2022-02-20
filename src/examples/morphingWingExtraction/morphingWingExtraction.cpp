@@ -59,7 +59,7 @@ int main (int argc, char** argv)
         Airfoil section = extract.sectioningCloudX(op.getPointCloudWithNormals(), wingSections[i], 2);
         extract.derotateToReferencePoints(section, firstReference, secondReference);
         data[i] = section.getMorphingWingParameter();
-        int indexTrailingEdge = section.findLeadingTrailingEdge(section.getFoil())[1];
+        int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, 1-positionFlap);
         AirfoilFitter fitAirfoil(section);
         fitAirfoil.replaceMorphedFlap(reference);

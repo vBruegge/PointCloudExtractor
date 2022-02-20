@@ -31,7 +31,8 @@ public:
     int indexSecondReference;
     float scale;
     float rotationAngle;
-    enum parameterType {CuttingDistance, IndexFirstReference, IndexSecondReference, Scale, RotationAngle};
+    float referenceLength;
+    enum parameterType {CuttingDistance, IndexFirstReference, IndexSecondReference, Scale, RotationAngle, ReferenceLength};
 };
 
 class Airfoil {

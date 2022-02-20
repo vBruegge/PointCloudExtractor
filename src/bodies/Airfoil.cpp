@@ -90,6 +90,8 @@ void Airfoil::setAnyMorphingWingParameter(MorphingWingParameter::parameterType t
     case MorphingWingParameter::parameterType::RotationAngle:
         morphingWingParameters.rotationAngle = value;
         break;
+    case MorphingWingParameter::parameterType::ReferenceLength:
+        morphingWingParameters.referenceLength = value;
     default:
         break;
     }
