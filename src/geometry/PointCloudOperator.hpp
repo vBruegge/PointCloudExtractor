@@ -14,8 +14,9 @@ public:
      * 
      * @param inputCloud point cloud which should be operated
      * @param fuselageGreaterThanWing boolean if the fuselage is greater then the wing wide (e.g. jets)
+     * @param splittingDistance distance between the wing and tail where the fuselage will be sectioned
      */
-    PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing);
+    PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing, bool completeAricraft);
 
     /**
      * @brief Construct a new Point Cloud Operator object
@@ -30,7 +31,7 @@ public:
      * @param filename filepath and name of the point cloud (PCD) file
      * @param fuselageGreaterThanWing boolean if the fuselage is greater then the wing wide (e.g. jets)
      */
-    PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing);
+    PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing, bool completeAricraft);
 
     /**
      * @brief splits the saved point clouds in wing and tails at the given distance
@@ -56,12 +57,24 @@ public:
      * @return pcl::PointCloud<pcl::PointXYZ>::Ptr pointer to the point cloud without the computed normals
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr getPointCloudWithoutNormals();
+
+    /**
+     * @brief checks if the orientation of the point cloud is right and rotates if needed
+     * @param splittingDistance distance betweeen the wing and tail
+     * 
+     */
+    void checkOrientation(float splittingDistance);
 private:
     void estimateNormals();
-    void aligningPointCloud(bool fuselageGreaterThanWing);
+    pcl::PointCloud<pcl::PointNormal>::Ptr estimateNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
+    void aligningPointCloud(bool fuselageGreaterThanWing, bool completeAricraft);
+    void downsize();
+    float getAngleXZPlane(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud);
 
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled;
+    Eigen::Matrix3f rotational_matrix;
 };
 
 #endif

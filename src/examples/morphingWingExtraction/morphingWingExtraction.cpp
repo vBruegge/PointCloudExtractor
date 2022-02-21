@@ -15,7 +15,7 @@ int main (int argc, char** argv)
 
     //reads the pcd file, alignes the point cloud and computes normals
     pointCloudFile = pointCloudFile + ".pcd";
-    PointCloudOperator op(pointCloudFile, true);
+    PointCloudOperator op(pointCloudFile, true, false);
 
     //possibility to generate a new sectioning file with the argument "new"
     std::string sectionFilename = argv[2];
