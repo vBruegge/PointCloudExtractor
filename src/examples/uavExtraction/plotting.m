@@ -1,7 +1,6 @@
 in = readmatrix("Results/wing_100mm.dat");
 org = readmatrix("SD7037.dat");
 chord = 294.868073;%360.730499;..
-org = org(2:end-1,:);
 
 [tmp, indexMin] = min(in(:,1));
 [tmp2, indexMinOrg] = min(org(:,1));
