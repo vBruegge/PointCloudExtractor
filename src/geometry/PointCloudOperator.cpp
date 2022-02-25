@@ -5,11 +5,15 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/transforms.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include "PointCloudOperator.hpp"
 
 PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing) {
     cloudNoNormals = inputCloud;
+    if(cloudNoNormals->points.size()>1000000) {
+        downsize();
+    }
     aligningPointCloud(fuselageGreaterThanWing);
     estimateNormals();
 }
@@ -25,6 +29,12 @@ PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreat
         std::cerr << "Please enter a valid cloud file" << std::endl;
     }
     cloudNoNormals = inputCloud;
+    if(cloudNoNormals->points.size()>1000000) {
+        downsize();
+    }
+    else {
+        downsampled = inputCloud;
+    }
     aligningPointCloud(fuselageGreaterThanWing);
     estimateNormals();
 }
@@ -32,58 +42,126 @@ PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreat
 void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
 //moment of inertia estimating feature extractor definition
 
-  std::cout << "Calculating OBB and AABB.." << std::endl;
-  pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
-  feature_extractor.setInputCloud (cloudNoNormals);
-  feature_extractor.compute ();
-  std::cout << "Feature extraction computation complete" << std::endl;
+    std::cout << "Calculating OBB and AABB.." << std::endl;
+    pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+    feature_extractor.setInputCloud(downsampled);
+    feature_extractor.compute();
+    std::cout << "Feature extraction computation complete" << std::endl;
 
-  //Variable declerations for feature extractor
-  std::vector <float> moment_of_inertia;
-  std::vector <float> eccentricity;
-  pcl::PointXYZ min_point_AABB;
-  pcl::PointXYZ max_point_AABB;
-  pcl::PointXYZ min_point_OBB;
-  pcl::PointXYZ max_point_OBB;
-  pcl::PointXYZ position_OBB;
-  Eigen::Matrix3f rotational_matrix_OBB;
-  float major_value, middle_value, minor_value;
-  float d_min,d_max;
-  Eigen::Vector3f major_vector, middle_vector, minor_vector;
-  Eigen::Vector3f mass_center;
+    //Variable declerations for feature extractor
+    pcl::PointXYZ min_point_OBB;
+    pcl::PointXYZ max_point_OBB;
+    pcl::PointXYZ position_OBB;
+    Eigen::Matrix3f rotational_matrix_OBB;
+    Eigen::Vector3f cog;
 
-  std::cout << "Calculating rotational matrix..." << std::endl;
-  //asign values from feature extractor to variables
-  feature_extractor.getMomentOfInertia (moment_of_inertia);
-  feature_extractor.getEccentricity (eccentricity);
-  feature_extractor.getAABB (min_point_AABB, max_point_AABB);
-  feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
-  feature_extractor.getEigenValues (major_value, middle_value, minor_value);
-  feature_extractor.getEigenVectors (major_vector, middle_vector, minor_vector);
-  feature_extractor.getMassCenter (mass_center);
-  std::cout << "Rotational matrix: "<< std::endl << rotational_matrix_OBB << std::endl;
+    std::cout << "Calculating rotational matrix..." << std::endl;
+    //asign values from feature extractor to variables
+    feature_extractor.getOBB (min_point_OBB, max_point_OBB, position_OBB, rotational_matrix_OBB);
+    feature_extractor.getMassCenter(cog);
+    std::cout << "Rotational matrix: "<< std::endl << rotational_matrix_OBB << std::endl;
 
-  //draw OBB
-  Eigen::Vector3f transformation_vector (position_OBB.x, position_OBB.y, position_OBB.z);
-  Eigen::Quaternionf rotation_quaternion (rotational_matrix_OBB);
+    //draw OBB
+    Eigen::Quaternionf rotation_quaternion (rotational_matrix_OBB);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTransformed(new pcl::PointCloud<pcl::PointXYZ>);
-  Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-  transform.translation() << transformation_vector;
-  transform.rotate (rotation_quaternion);
-  Eigen::Affine3f inverse_transform = transform.inverse();
-  pcl::transformPointCloud (*cloudNoNormals, *cloudTransformed, inverse_transform);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloudTransformed(new pcl::PointCloud<pcl::PointXYZ>);
+    Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+    transform.translation() << cog;
+    transform.rotate (rotation_quaternion);
+    Eigen::Affine3f inverse_transform = transform.inverse();
+    pcl::transformPointCloud (*cloudNoNormals, *cloudTransformed, inverse_transform);
+    pcl::transformPointCloud (*downsampled, *downsampled, inverse_transform);
+    //pcl::io::savePCDFile("transformed.txt", *downsampled);
 
-  if(fuselageGreaterThanWing == 1) {
-    const Eigen::Vector3f   translationVector (0,0,0);
-    Eigen::AngleAxisf rotationQuaternion (M_PI/2, Eigen::Vector3f::UnitZ());
-    Eigen::Affine3f transformationSection = Eigen::Affine3f::Identity();
-    transformationSection.translation() << translationVector;
-    transformationSection.rotate (rotationQuaternion);
+    if(fuselageGreaterThanWing == true) {
+        const Eigen::Vector3f translationVector (0,0,0);
+        Eigen::AngleAxisf rotationQuaternion (M_PI/2, Eigen::Vector3f::UnitZ());
+        Eigen::Affine3f transformationSection = Eigen::Affine3f::Identity();
+        transformationSection.translation() << translationVector;
+        transformationSection.rotate (rotationQuaternion);
 
-    pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformationSection);
-  }
-  cloudNoNormals = cloudTransformed;
+        pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformationSection);
+    }
+
+    float angle = getAngleXZPlane(downsampled);
+    Eigen::AngleAxisf rotate(-angle, Eigen::Vector3f::UnitX());
+    Eigen::Affine3f transformCorrected = Eigen::Affine3f::Identity();
+    transformCorrected.rotate(rotate);
+    inverse_transform = transformCorrected.inverse();
+    pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, inverse_transform);
+    pcl::transformPointCloud (*downsampled, *downsampled, transformCorrected);
+    //pcl::io::savePCDFile("transformed2.txt", *downsampled);
+    cloudNoNormals = cloudTransformed;
+}
+
+float PointCloudOperator::getAngleXZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
+    pcl::PointXYZ minPt, maxPt;
+    pcl::getMinMax3D(*inputCloud, minPt, maxPt);
+    float cutX = 350;
+    float cutY = 275;
+
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>);
+    pass.setInputCloud (inputCloud);
+    pass.setFilterFieldName ("x");
+    pass.setFilterLimits (-cutX, cutX);
+    pass.filter (*filtered);
+
+    pass.setInputCloud (filtered);
+    pass.setFilterFieldName ("y");
+    pass.setFilterLimits (-cutY, cutY);
+    pass.filter (*filtered);
+
+    float angleMin = -M_PI/2;
+    float angleMax = M_PI/2;
+    
+    float angle = 1.0/180*M_PI;
+    float step = angle;
+    pcl::PointXYZ minSave, maxSave, min, max;
+    pcl::getMinMax3D(*filtered, minSave, maxSave);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
+    Eigen::AngleAxisf rotateLeft(angle, Eigen::Vector3f::UnitX());
+    Eigen::Affine3f transformCorrected = Eigen::Affine3f::Identity();
+    transformCorrected.rotate(rotateLeft);
+    Eigen::Affine3f inverse_transform = transformCorrected.inverse();
+    pcl::transformPointCloud (*filtered, *tmp, inverse_transform);
+    pcl::getMinMax3D(*tmp, min, max);
+    bool positiveDirection = true;
+    if(abs(min.z-max.z) > abs(minSave.z-maxSave.z)) {
+        angle = -1.0/180*M_PI;
+        Eigen::AngleAxisf rotateRight(angle, Eigen::Vector3f::UnitX());
+        transformCorrected = Eigen::Affine3f::Identity();
+        transformCorrected.rotate(rotateRight);
+        inverse_transform = transformCorrected.inverse();
+        pcl::transformPointCloud (*filtered, *tmp, inverse_transform);
+        pcl::getMinMax3D(*tmp, min, max);
+        positiveDirection = false;
+    }
+    do {
+        if(positiveDirection == true)
+            angle += step;
+        else
+            angle -= step;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
+        Eigen::AngleAxisf rotate(angle, Eigen::Vector3f::UnitX());
+        transformCorrected = Eigen::Affine3f::Identity();
+        transformCorrected.rotate(rotate);
+        inverse_transform = transformCorrected.inverse();
+        pcl::transformPointCloud (*filtered, *tmp, inverse_transform);
+        pcl::getMinMax3D(*tmp, min, max);
+
+        if(abs(min.z-max.z) < abs(minSave.z-maxSave.z)) {
+            minSave = min;
+            maxSave = max;
+        }
+        else {
+            step /= 2;
+            positiveDirection = !positiveDirection;
+        }
+
+    } while(step > 5e-4);
+    
+    return angle;
 }
 
 void PointCloudOperator::estimateNormals() {
@@ -116,6 +194,38 @@ void PointCloudOperator::estimateNormals() {
   std::cout << "Normal calculation complete...\n";
 
   cloud = inputCloudWithNormals;
+}
+
+pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudOperator::estimateNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
+    std::cout << "Calculate normals of point cloud...\n";
+
+  //process normals
+
+  // Create the normal estimation class, and pass the input dataset to it
+  pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+  ne.setInputCloud (inputCloud);
+
+  // Create an empty kdtree representation, and pass it to the normal estimation object.
+  // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+  ne.setSearchMethod (tree);
+
+  // Output datasets
+  pcl::PointCloud<pcl::Normal>::Ptr cloudNormals (new pcl::PointCloud<pcl::Normal>);
+
+  // Use all neighbors in a sphere of radius 2.5mm
+  ne.setRadiusSearch (8);
+
+  // Compute the features
+  ne.compute (*cloudNormals);
+  pcl::PointCloud<pcl::PointNormal>::Ptr inputCloudWithNormals (new pcl::PointCloud<pcl::PointNormal>);
+  pcl::concatenateFields(*inputCloud, *cloudNormals, *inputCloudWithNormals);
+
+
+  //pcl::io::savePCDFile("mlsNormals.txt", *inputCloudWithNormals);
+  std::cout << "Normal calculation complete...\n";
+
+  return inputCloudWithNormals;
 }
 
 void PointCloudOperator::splitCloudInWingAndTail(pcl::PointCloud<pcl::PointNormal>::Ptr wing,
@@ -172,4 +282,14 @@ pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudOperator::getPointCloudWithNorm
 }
 pcl::PointCloud<pcl::PointXYZ>::Ptr PointCloudOperator::getPointCloudWithoutNormals() {
     return cloudNoNormals;
+}
+
+void PointCloudOperator::downsize() {
+    pcl::VoxelGrid<pcl::PointXYZ> sor;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr smallerCloud(new pcl::PointCloud<pcl::PointXYZ>);
+    sor.setInputCloud (cloudNoNormals);
+    sor.setLeafSize (5, 5, 5);
+    sor.filter (*smallerCloud);
+    downsampled = smallerCloud;
+    pcl::io::savePCDFile("downsized.txt", *downsampled);
 }

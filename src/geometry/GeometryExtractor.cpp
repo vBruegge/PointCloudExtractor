@@ -768,11 +768,8 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
   } while(firstPointIndex == -1 || secondPointIndex == -1 || referenceFound == count);
 
   MorphingWingParameter params;
-  kdtree.setInputCloud (inputCloud);
-  kdtree.nearestKSearch (compare->points[firstPointIndex], 1, pointIndexSearch, pointDistanceSearch);
-  params.indexFirstReference = pointIndexSearch[0];
-  kdtree.nearestKSearch (compare->points[secondPointIndex], 1, pointIndexSearch, pointDistanceSearch);
-  params.indexSecondReference = pointIndexSearch[0];
+  params.firstReference = pcl::PointXYZ(compare->points[firstPointIndex].x, compare->points[firstPointIndex].y, compare->points[firstPointIndex].z);
+  params.secondReference = pcl::PointXYZ(compare->points[secondPointIndex].x, compare->points[secondPointIndex].y, compare->points[secondPointIndex].z);
   params.referenceLength = referenceLength.norm();
   foil.setAllMorphingWingParameter(params);
 
@@ -793,7 +790,7 @@ void GeometryExtractor::translateSectionToReference(Airfoil& foil, pcl::PointXYZ
   }
 
   MorphingWingParameter params = foil.getMorphingWingParameter();
-  pcl::PointXYZ point = inputCloud->points[params.indexFirstReference];
+  pcl::PointXYZ point = params.firstReference;
   const Eigen::Vector3f translationVector (reference.x-point.x, reference.y-point.y, reference.z-point.z);
 
   Eigen::Affine3f transformationAffine = Eigen::Affine3f::Identity();
@@ -811,8 +808,8 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
 
   Eigen::Vector3f referenceVector;
   referenceVector << secondReference.x-firstReference.x, secondReference.y-firstReference.y, secondReference.z-firstReference.z;
-  pcl::PointXYZ firstPoint = foil.getFoil()->points[params.indexFirstReference];
-  pcl::PointXYZ secondPoint = foil.getFoil()->points[params.indexSecondReference];
+  pcl::PointXYZ firstPoint = params.firstReference;
+  pcl::PointXYZ secondPoint = params.secondReference; 
   Eigen::Vector3f pointVector;
   pointVector << secondPoint.x-firstPoint.x, secondPoint.y-firstPoint.y, secondPoint.z-firstPoint.z;
   float angle = pcl::getAngle3D(pointVector, referenceVector);
@@ -830,18 +827,25 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
   pcl::PointXYZ minRot, maxRot, minRotInv, maxRotInv;
   pcl::getMinMax3D(*rotated, minRot, maxRot);
   pcl::getMinMax3D(*rotatedInverse, minRotInv, maxRotInv);
-  if(abs(maxRot.z-minRot.z) < abs(maxRotInv.z-minRotInv.z))
+  Eigen::Vector4f rotatedFirstReference, rotatedSecondReference;
+  if(abs(maxRot.z-minRot.z) < abs(maxRotInv.z-minRotInv.z)) {
     inputCloud = rotated;
-  else
+    rotatedFirstReference = transformationAffine * Eigen::Vector4f(0, firstPoint.y, firstPoint.z, 0);
+    rotatedSecondReference = transformationAffine * Eigen::Vector4f(0, secondPoint.y, secondPoint.z, 0);
+  }
+  else {
     inputCloud = rotatedInverse;
+    rotatedFirstReference = transformationAffine.inverse() * Eigen::Vector4f(0, firstPoint.y, firstPoint.z, 0);
+    rotatedSecondReference = transformationAffine.inverse() * Eigen::Vector4f(0, secondPoint.y, secondPoint.z, 0);
+  }
     
   pcl::io::savePCDFile("rotated.txt", *inputCloud);
-  
-  firstPoint = inputCloud->points[params.indexFirstReference];
-  secondPoint = inputCloud->points[params.indexSecondReference];
-  double referenceLength = Eigen::Vector2d(firstReference.y-secondReference.y, firstReference.z-secondReference.z).norm();
-  double scale = referenceLength/params.referenceLength;
 
+  double referenceLength = Eigen::Vector2d(firstReference.y-secondReference.y, firstReference.z-secondReference.z).norm();
+  double scale = referenceLength/params.referenceLength;;
+
+  params.rotationAngle = angle*180/M_PI;
+  params.scale = scale;
   for(int i = 0; i < inputCloud->size(); i++) {
     inputCloud->points[i].x = 0;
     inputCloud->points[i].y *= scale;
@@ -849,11 +853,13 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
   }
   pcl::io::savePCDFile("rotated-scaled.txt", *inputCloud);
 
-  foil.setFoil(inputCloud);
-  translateSectionToReference(foil, firstReference);
-
-  params.rotationAngle = angle*180/M_PI;
-  params.scale = scale;
+  rotatedFirstReference *= scale;
+  rotatedSecondReference *= scale;
+  params.firstReference = pcl::PointXYZ(0, rotatedFirstReference[1], rotatedFirstReference[2]);
+  params.secondReference = pcl::PointXYZ(0, rotatedSecondReference[1], rotatedSecondReference[2]);
   params.name = "morphing_wing_" + std::to_string(params.cuttingDistance) + "mm.dat";
+
+  foil.setFoil(inputCloud);
   foil.setAllMorphingWingParameter(params);
+  translateSectionToReference(foil, firstReference);
 }

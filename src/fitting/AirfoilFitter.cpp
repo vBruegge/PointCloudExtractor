@@ -267,7 +267,7 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
         
         newPoints.push_back(Eigen::Vector2d(xiDc, yiDc));
     }
-    //newPoints.push_back(Eigen::Vector2d(1, trailingEdgeWidthNormed));
+    newPoints.push_back(Eigen::Vector2d(1, 0));
     return newPoints;
 }                                                                        
 

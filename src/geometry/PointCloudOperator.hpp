@@ -14,6 +14,7 @@ public:
      * 
      * @param inputCloud point cloud which should be operated
      * @param fuselageGreaterThanWing boolean if the fuselage is greater then the wing wide (e.g. jets)
+     * @param splittingDistance distance between the wing and tail where the fuselage will be sectioned
      */
     PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing);
 
@@ -56,12 +57,24 @@ public:
      * @return pcl::PointCloud<pcl::PointXYZ>::Ptr pointer to the point cloud without the computed normals
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr getPointCloudWithoutNormals();
+
+    /**
+     * @brief checks if the orientation of the point cloud is right and rotates if needed
+     * @param splittingDistance distance betweeen the wing and tail
+     * 
+     */
+    void checkOrientation(float splittingDistance);
+    
 private:
     void estimateNormals();
+    pcl::PointCloud<pcl::PointNormal>::Ptr estimateNormals(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
     void aligningPointCloud(bool fuselageGreaterThanWing);
+    void downsize();
+    float getAngleXZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud);
 
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud;
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudNoNormals;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled;
 };
 
 #endif
