@@ -78,11 +78,23 @@ void Airfoil::setAnyMorphingWingParameter(MorphingWingParameter::parameterType t
     case MorphingWingParameter::parameterType::CuttingDistance:
         morphingWingParameters.cuttingDistance = value;
         break;
-    case MorphingWingParameter::parameterType::IndexFirstReference:
-        morphingWingParameters.indexFirstReference = (int)value;
+    case MorphingWingParameter::parameterType::FirstReferenceX:
+        morphingWingParameters.firstReference.x = value;
         break;
-    case MorphingWingParameter::parameterType::IndexSecondReference:
-        morphingWingParameters.indexSecondReference = (int)value;
+    case MorphingWingParameter::parameterType::FirstReferenceY:
+        morphingWingParameters.firstReference.y = value;
+        break;
+    case MorphingWingParameter::parameterType::FirstReferenceZ:
+        morphingWingParameters.firstReference.z = value;
+        break;
+    case MorphingWingParameter::parameterType::SecondReferenceX:
+        morphingWingParameters.secondReference.x = value;
+        break;
+    case MorphingWingParameter::parameterType::SecondReferenceY:
+        morphingWingParameters.secondReference.y = value;
+        break;
+    case MorphingWingParameter::parameterType::SecondReferenceZ:
+        morphingWingParameters.secondReference.z = value;
         break;
     case MorphingWingParameter::parameterType::Scale:
         morphingWingParameters.scale = value;
@@ -92,6 +104,7 @@ void Airfoil::setAnyMorphingWingParameter(MorphingWingParameter::parameterType t
         break;
     case MorphingWingParameter::parameterType::ReferenceLength:
         morphingWingParameters.referenceLength = value;
+        break;
     default:
         break;
     }
@@ -236,44 +249,32 @@ void Airfoil::deleteMorphingWingReferences(float widthReferences) {
         save = lower;
     }
 
-    pcl::PointXYZ firstReference = foil->points[morphingWingParameters.indexFirstReference];
-    pcl::PointXYZ secondReference = foil->points[morphingWingParameters.indexSecondReference];
     pcl::PointCloud<pcl::PointXYZ>::Ptr deleted(new pcl::PointCloud<pcl::PointXYZ>);
-
     pass.setFilterFieldName("y");
-    if(firstReference.y < trailingEdgePoint.y) {
-        pass.setFilterLimits(firstReference.y+0.25, FLT_MAX);
+    if(morphingWingParameters.firstReference.y < trailingEdgePoint.y) {
+        pass.setFilterLimits(morphingWingParameters.firstReference.y+0.25, FLT_MAX);
         pass.filter(*rightSide);
-        pass.setFilterLimits(-FLT_MAX, firstReference.y-0.25-widthReferences);
+        pass.setFilterLimits(-FLT_MAX, morphingWingParameters.firstReference.y-0.25-widthReferences);
         pass.filter(*leftSide);
         pcl::concatenate(*leftSide, *rightSide, *deleted);
         pass.setInputCloud(deleted);
-        pass.setFilterLimits(secondReference.y+0.25, FLT_MAX);
+        pass.setFilterLimits(morphingWingParameters.secondReference.y+0.25, FLT_MAX);
         pass.filter(*rightSide);
-        pass.setFilterLimits(-FLT_MAX, secondReference.y-0.25-widthReferences);
+        pass.setFilterLimits(-FLT_MAX, morphingWingParameters.secondReference.y-0.25-widthReferences);
         pass.filter(*leftSide);
     }
     else {
-        pass.setFilterLimits(-FLT_MAX, firstReference.y-0.25);
+        pass.setFilterLimits(-FLT_MAX, morphingWingParameters.firstReference.y-0.25);
         pass.filter(*rightSide);
-        pass.setFilterLimits(firstReference.y+0.25+widthReferences, FLT_MAX);
+        pass.setFilterLimits(morphingWingParameters.firstReference.y+0.25+widthReferences, FLT_MAX);
         pass.filter(*leftSide);
         pcl::concatenate(*leftSide, *rightSide, *deleted);
         pass.setInputCloud(deleted);
-        pass.setFilterLimits(-FLT_MAX, secondReference.y-0.25);
+        pass.setFilterLimits(-FLT_MAX, morphingWingParameters.secondReference.y-0.25);
         pass.filter(*rightSide);
-        pass.setFilterLimits(secondReference.y+0.25+widthReferences, FLT_MAX);
+        pass.setFilterLimits(morphingWingParameters.secondReference.y+0.25+widthReferences, FLT_MAX);
         pass.filter(*leftSide);
     }
     pcl::concatenate(*leftSide, *rightSide, *deleted);
     pcl::concatenate(*deleted, *save, *foil);
-
-    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-    kdtree.setInputCloud (foil);
-    std::vector<int> pointIndexSearch(1);
-    std::vector<float> pointDistanceSearch(1);
-    kdtree.nearestKSearch (firstReference, 1, pointIndexSearch, pointDistanceSearch);
-    morphingWingParameters.indexFirstReference = pointIndexSearch[0];
-    kdtree.nearestKSearch (secondReference, 1, pointIndexSearch, pointDistanceSearch);
-    morphingWingParameters.indexSecondReference = pointIndexSearch[0];
 }

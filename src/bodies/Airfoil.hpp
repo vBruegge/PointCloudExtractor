@@ -27,12 +27,13 @@ class MorphingWingParameter {
 public:
     std::string name;
     float cuttingDistance;
-    int indexFirstReference;
-    int indexSecondReference;
+    pcl::PointXYZ firstReference;
+    pcl::PointXYZ secondReference;
     float scale;
     float rotationAngle;
     float referenceLength;
-    enum parameterType {CuttingDistance, IndexFirstReference, IndexSecondReference, Scale, RotationAngle, ReferenceLength};
+    enum parameterType {CuttingDistance, FirstReferenceX, FirstReferenceY, FirstReferenceZ, SecondReferenceX,
+        SecondReferenceY, SecondReferenceZ, Scale, RotationAngle, ReferenceLength};
 };
 
 class Airfoil {
