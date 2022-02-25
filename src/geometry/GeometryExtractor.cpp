@@ -707,7 +707,7 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
     
   //nearest neighbor search for iterating through neighboring points in none-ordered point cloud
   //setup of the search tree
-  int n = 10;
+  int n = 25;
   pcl::KdTreeFLANN<pcl::PointNormal> kdtree;
   kdtree.setInputCloud (compare);
  
@@ -808,8 +808,16 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
 
   Eigen::Vector3f referenceVector;
   referenceVector << secondReference.x-firstReference.x, secondReference.y-firstReference.y, secondReference.z-firstReference.z;
-  pcl::PointXYZ firstPoint = params.firstReference;
-  pcl::PointXYZ secondPoint = params.secondReference; 
+
+  pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+  kdtree.setInputCloud (foil.getFoil());
+  std::vector<int> pointIndexSearch(1);
+  std::vector<float> pointDistanceSearch(1);
+  kdtree.nearestKSearch (params.firstReference, 1, pointIndexSearch, pointDistanceSearch);
+  pcl::PointXYZ firstPoint = foil.getFoil()->points[pointIndexSearch[0]];
+  kdtree.nearestKSearch (params.secondReference, 1, pointIndexSearch, pointDistanceSearch);
+  pcl::PointXYZ secondPoint = foil.getFoil()->points[pointIndexSearch[0]];
+
   Eigen::Vector3f pointVector;
   pointVector << secondPoint.x-firstPoint.x, secondPoint.y-firstPoint.y, secondPoint.z-firstPoint.z;
   float angle = pcl::getAngle3D(pointVector, referenceVector);
@@ -830,8 +838,8 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
   Eigen::Vector4f rotatedFirstReference, rotatedSecondReference;
   if(abs(maxRot.z-minRot.z) < abs(maxRotInv.z-minRotInv.z)) {
     inputCloud = rotated;
-    rotatedFirstReference = transformationAffine * Eigen::Vector4f(0, firstPoint.y, firstPoint.z, 0);
-    rotatedSecondReference = transformationAffine * Eigen::Vector4f(0, secondPoint.y, secondPoint.z, 0);
+    rotatedFirstReference = transformationAffine * Eigen::Vector4f(0, params.firstReference.y, params.firstReference.z, 0);
+    rotatedSecondReference = transformationAffine * Eigen::Vector4f(0, params.secondReference.y, params.secondReference.z, 0);
   }
   else {
     inputCloud = rotatedInverse;
