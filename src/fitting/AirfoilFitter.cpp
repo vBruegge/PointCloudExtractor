@@ -342,10 +342,10 @@ void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referencePr
     io.writingPointCloud("../Results/" + name + "_compare.txt", compare);*/
     if(checkIfFoilUpsideDown() == true) {
         for(int i = 0; i < upper.size(); i++) {
-            upper[i][1] = -upper[i][1]-abs(2*upper[upper.size()-5][1]);
+            upper[i][1] = -upper[i][1] + 2*upper[upper.size()-20][1];
         }
         for(int i = 0; i < lower.size(); i++) {
-            lower[i][1] = -lower[i][1]-abs(2*upper[upper.size()-5][1]);
+            lower[i][1] = -lower[i][1] + 2*upper[upper.size()-20][1];
         }
     }
     /*if(upper.size() > 100) {

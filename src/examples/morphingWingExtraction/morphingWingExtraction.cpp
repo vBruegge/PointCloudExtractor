@@ -35,21 +35,29 @@ int main (int argc, char** argv)
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances
-    float xPosFirstReference = 0.8;
-    float xPosSecondReference = 0.4;
-    pcl::PointXYZ firstReference, secondReference;
+    float xPosFirstReference = 0.801998;
+    float xPosSecondReference = 0.399124;
+    int indexBeforeFirstReference = 0;
+    int indexAfterFirstReference = 0;
+    int indexBeforeSecondReference = 0;
+    int indexAfterSecondReference = 0;
+    //219.518, 441.099
     for(int i = reference.size()/2; i < reference.size(); i++) {
-        if(abs(reference[i][0]-xPosFirstReference) < 0.01) {
-            firstReference.x = 0;
-            firstReference.y = reference[i][0];
-            firstReference.z = reference[i][1];
+        if(reference[i][0] < xPosFirstReference) {
+            indexBeforeFirstReference = i;
+            indexAfterFirstReference = i+1;
         }
-        if(abs(reference[i][0]-xPosSecondReference) < 0.01) {
-            secondReference.x = 0;
-            secondReference.y = reference[i][0];
-            secondReference.z = reference[i][1];
+        if(reference[i][0] < xPosSecondReference) {
+            indexBeforeSecondReference = i;
+            indexAfterSecondReference = i+1;
         }
     }
+    Eigen::Vector2d gradient = reference[indexAfterFirstReference]-reference[indexBeforeFirstReference];
+    pcl::PointXYZ firstReference(0, xPosFirstReference, reference[indexBeforeFirstReference][1] +
+        gradient[1]/gradient[0]*(reference[indexAfterFirstReference][0]-xPosFirstReference));
+    gradient = reference[indexAfterSecondReference]-reference[indexBeforeSecondReference];
+    pcl::PointXYZ secondReference(0, xPosSecondReference, reference[indexBeforeSecondReference][1] +
+        gradient[1]/gradient[0]*(reference[indexAfterSecondReference][0]-xPosSecondReference));
     
     //morphing wing sectioning
     float positionFlap = std::stof(argv[4]);
