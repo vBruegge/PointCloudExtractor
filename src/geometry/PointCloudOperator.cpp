@@ -32,6 +32,9 @@ PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreat
     if(cloudNoNormals->points.size()>1000000) {
         downsize();
     }
+    else {
+        downsampled = inputCloud;
+    }
     aligningPointCloud(fuselageGreaterThanWing);
     estimateNormals();
 }
@@ -68,6 +71,17 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
     Eigen::Affine3f inverse_transform = transform.inverse();
     pcl::transformPointCloud (*cloudNoNormals, *cloudTransformed, inverse_transform);
     pcl::transformPointCloud (*downsampled, *downsampled, inverse_transform);
+    //pcl::io::savePCDFile("transformed.txt", *downsampled);
+
+    if(fuselageGreaterThanWing == true) {
+        const Eigen::Vector3f translationVector (0,0,0);
+        Eigen::AngleAxisf rotationQuaternion (M_PI/2, Eigen::Vector3f::UnitZ());
+        Eigen::Affine3f transformationSection = Eigen::Affine3f::Identity();
+        transformationSection.translation() << translationVector;
+        transformationSection.rotate (rotationQuaternion);
+
+        pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformationSection);
+    }
 
     float angle = getAngleXZPlane(downsampled);
     Eigen::AngleAxisf rotate(-angle, Eigen::Vector3f::UnitX());
@@ -76,24 +90,15 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
     inverse_transform = transformCorrected.inverse();
     pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, inverse_transform);
     pcl::transformPointCloud (*downsampled, *downsampled, transformCorrected);
-
-    if(fuselageGreaterThanWing == true) {
-        const Eigen::Vector3f   translationVector (0,0,0);
-        Eigen::AngleAxisf rotationQuaternion (M_PI/2, Eigen::Vector3f::UnitZ());
-        Eigen::Affine3f transformationSection = Eigen::Affine3f::Identity();
-        transformationSection.translation() << translationVector;
-        transformationSection.rotate (rotationQuaternion);
-
-        pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformationSection);
-    }
+    //pcl::io::savePCDFile("transformed2.txt", *downsampled);
     cloudNoNormals = cloudTransformed;
 }
 
 float PointCloudOperator::getAngleXZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
     pcl::PointXYZ minPt, maxPt;
     pcl::getMinMax3D(*inputCloud, minPt, maxPt);
-    float cutX = maxPt.x/5;
-    float cutY = maxPt.y/7;
+    float cutX = 350;
+    float cutY = 275;
 
     pcl::PassThrough<pcl::PointXYZ> pass;
     pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>);
@@ -154,7 +159,7 @@ float PointCloudOperator::getAngleXZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr in
             positiveDirection = !positiveDirection;
         }
 
-    } while(step > 1e-3);
+    } while(step > 5e-4);
     
     return angle;
 }
