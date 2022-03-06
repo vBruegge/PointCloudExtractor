@@ -34,7 +34,7 @@
 	  phases = ["unpackPhase" "buildPhase" "installPhase" ];
 
 	  buildPhase = ''
-	    cd src/examples/${name}
+	    cd examples/${name}
 	    [ -e build ] && rm -rf build
 	    mkdir build
 	    cd build

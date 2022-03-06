@@ -19,23 +19,22 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 include_directories(/usr/local/include)
-include_directories(${CMAKE_SOURCE_DIR}/../../bodies
-                    ${CMAKE_SOURCE_DIR}/../../fitting
-                    ${CMAKE_SOURCE_DIR}/../../geometry
-                    ${CMAKE_SOURCE_DIR}/../../gui
-                    ${CMAKE_SOURCE_DIR}/../../io)
+include_directories(${CMAKE_SOURCE_DIR}/../../src/bodies
+                    ${CMAKE_SOURCE_DIR}/../../src/fitting
+                    ${CMAKE_SOURCE_DIR}/../../src/geometry
+                    ${CMAKE_SOURCE_DIR}/../../src/gui
+                    ${CMAKE_SOURCE_DIR}/../../src/io)
 link_directories(/usr/local/lib)
 
 set(SRCS
-    ${CMAKE_SOURCE_DIR}/../../bodies/Airfoil.cpp
-    ${CMAKE_SOURCE_DIR}/../../bodies/Fuselage.cpp
-    ${CMAKE_SOURCE_DIR}/../../fitting/AirfoilFitter.cpp
-    ${CMAKE_SOURCE_DIR}/../../fitting/FuselageFitter.cpp
-    ${CMAKE_SOURCE_DIR}/../../geometry/GeometryExtractor.cpp
-    ${CMAKE_SOURCE_DIR}/../../geometry/PointCloudOperator.cpp
-    ${CMAKE_SOURCE_DIR}/../../gui/DrawUAV.cpp
-    ${CMAKE_SOURCE_DIR}/../../io/IOHandler.cpp
-    ${CMAKE_SOURCE_DIR}/../../bodies/Fuselage.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/bodies/Airfoil.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/fitting/AirfoilFitter.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/fitting/FuselageFitter.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/geometry/GeometryExtractor.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/geometry/PointCloudOperator.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/gui/DrawUAV.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/io/IOHandler.cpp
+    ${CMAKE_SOURCE_DIR}/../../src/bodies/Fuselage.cpp
     morphingWingExtraction.cpp)
 
 add_executable (morphingWingExtraction ${SRCS})
