@@ -3,6 +3,7 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/common/transforms.h>
 #include <pcl/filters/voxel_grid.h>
 

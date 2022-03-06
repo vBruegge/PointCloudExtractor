@@ -25,7 +25,7 @@
 	];
       };
 
-      packages =
+      packages.x86_64-linux =
         let mkExample = xname: pkgs.stdenv.mkDerivation rec {
           name = xname;
 	  src = self;
@@ -49,8 +49,9 @@
 	};
         in {
           morphingWingExtraction = mkExample "morphingWingExtraction";
+          uavExtraction = mkExample "uavExtraction";
       };
 
-      defaultPackage.x86_64-linux = packages.morphingWingExtraction;
+      defaultPackage.x86_64-linux = packages.x86_64-linux.uavExtraction;
     };
 }
