@@ -50,4 +50,7 @@ This results in the sectioning of the point cloud "DemoMono.txt". The position w
 
 # Nix
 A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your distribution. In this case, you can use nix to build all example projects. This has the advantage that no other dependency has to be installed on the machine.
-To use the building operation of nix, change the directory of a terminal to your git and type `nix build`. The executables will be found in `result/bin`.
+To use the building operation of nix, change the directory of a terminal to your git and type `nix build` and the name of the example. The executables will be found in `result/bin`.
+
+`nix build morphingWingExtraction` will build the morphing wing example.
+`nix build uavExtraction` will build the uavExtraction example.
