@@ -49,11 +49,18 @@ The programm requires four inputs:
 This results in the sectioning of the point cloud "DemoMono.txt". The position where to section are specified in the "section-generation.txt". The reference airfoil is named "B106_optairfoil.dat". The flap should be replaced by the reference foil, its position is 0.84.
 
 # Nix
-A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your distribution. In this case, you can use nix to build all example projects. This has the advantage that no other dependency has to be installed on the machine.
-To use the building operation of nix, change the directory of a terminal to your git and type `nix build` and the name of the example. The executables will be found in `result/bin`.
+A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your machine. In this case, you can use nix to build all example projects. This has the advantage that no other dependency is needed and no libraries have to be installed on the machine.
+To use the building operation of nix, there are two possible ways:
+1. Clone the repository beforehand and then use nix for building:
+    In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git' (SSH). Then go to the root of the git repository in an Terminal and enter:
+    - `nix build .#uavExtraction` for building the aircraft extraction example
+    - `nix build .#morphingWingExtraction`for building the morphing wing extraction example
+2. Building the git repository without cloning:
+    In this case, the repository is cloned by nix and builded in the same step. Enter:
+    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git#uavExtraction` for building the aircraft extraction example
+    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git#morphingWingExtraction` for building the morphing wing extraction example
 
-`nix build morphingWingExtraction` will build the morphing wing example.
-`nix build uavExtraction` will build the uavExtraction example.
+The executeables can be found in `result/bin`.
 
 # Section generation file
 The section generation file has a specific, pre-defined structure.  Examples of files are presented in the following:
@@ -68,4 +75,22 @@ The section generation file has a specific, pre-defined structure.  Examples of 
     ```
     
     Here, the second line defines a distance between the wing and tail. The point cloud is split in two this distance to enable        sectioning the and tail separetely. The following lines define the sectioning distances dependening on the center of mass. For an ease of use, the GUI can be used to generate the file for the first time. Please note, that the lines for the wing and horizontal tail sections can be exchanged.
-
+2. For a complete aircraft with a vertical tail, the sectioning file is defined as:
+    ```
+    v
+    975 
+    fuselage -1450 -925 -510 -95 600 1175 1485
+    wing 220 550 1150 1180 1800 2350 2400 2450
+    horizontal_tail 125 260 300 470 505
+    ```
+    The sectioning file has a line less as the one above. Since there is no vertical tail or fin, these sections must not be defined. Important is the replacement of the h to a v in the first line.
+3. For a non complete aircraft (e.g. without tail, morphing wing...), the sectioning file is defined as:
+    ```
+    h
+    -750
+    fuselage -650 500 450 300 -75 -180 -350 -500 -750
+    wing 110 350 675 1010 1150 1350 1425 1450
+    horizontal_tail
+    vertical_tail
+    ```
+    If no sections of this type is required, just leave the definition of the sectioning distances out. Important: the name is still necessary in the file! For configurations without a tail, the second line has no further significance and can contain any number (e.g. 0). Please note, that the first line defines the number of sectioning types and therefore has to be defined, even if there is no tail section needed.
