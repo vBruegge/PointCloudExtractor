@@ -49,8 +49,10 @@
 	};
         in {
           morphingWingExtraction = mkExample "morphingWingExtraction";
+          uavExtraction = mkExample "uavExtraction";
       };
 
       defaultPackage.x86_64-linux = packages.morphingWingExtraction;
+      defaultPackage.x86_64-linux = packages.uavExtraction;
     };
 }
