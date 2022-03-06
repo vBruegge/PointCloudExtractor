@@ -188,9 +188,7 @@ int Airfoil::findTrailingEdge() {
   }
   center.x /= foil->size();
   center.y /= foil->size();
-  center.z /= foil->size();
-  //std::cout << center.x << " "  << center.y << " " << center.z << std::endl;
-  
+  center.z /= foil->size();  
 
   pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
   kdtree.setInputCloud (foil);

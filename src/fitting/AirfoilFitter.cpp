@@ -40,29 +40,32 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
         sectionDisX = 0.1;
         dis = 0.05;
     }
-    int iterator = abs((maxPt.y-minPt.y)) / sectionDisX + 2;
+    const int iterator = abs((maxPt.y-minPt.y)) / sectionDisX + 2;
     std::vector<Eigen::Vector2d> compare_(iterator);
     pcl::PointXYZ leadingEdge = inputCloud->points[indexLeadingTrailingEdge[0]];
     pcl::PointXYZ trailingEdge = inputCloud->points[indexLeadingTrailingEdge[1]];
 
     float beginSection;
     if(leadingEdge.y < trailingEdge.y) {
-      compare_[0] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
       beginSection = leadingEdge.y;
-      compare_[iterator-1] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-dis*1e-2);
     }
     else {
-      compare_[0] = Eigen::Vector2d(trailingEdge.y, trailingEdge.z-dis*1e-2);
       beginSection = trailingEdge.y;
-      compare_[iterator-1] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
     }
+
+    compare_[0] = Eigen::Vector2d(leadingEdge.y, leadingEdge.z);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloudPassThrough (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud (inputCloud);
+    pass.setFilterFieldName ("y");
+    pass.setFilterLimits(maxPt.y-dis/6, maxPt.y+dis/6);
+    pass.filter(*cloudPassThrough);
+    pcl::getMinMax3D(*cloudPassThrough, minPt, maxPt);
+    compare_[compare_.size()-1] = Eigen::Vector2d(maxPt.y, (minPt.z+maxPt.z)/2);
+    std::cout << compare_[compare_.size()-1];
 
     for(int i = 1; i < iterator-1; i++) {
-      pass.setInputCloud (inputCloud);
-      pass.setFilterFieldName ("y");
       pass.setFilterLimits (beginSection + i*sectionDisX - dis, beginSection + i*sectionDisX + dis);
       pass.filter (*cloudPassThrough);
 
@@ -257,17 +260,22 @@ std::vector<Eigen::Vector2d> AirfoilFitter::bernsteinPolynomialFit(std::vector<E
     for(int i = 0; i < size; i++) {
         double xiDc = 0.5 - 0.5*cos((2*i-1)/(float)(2*size)*M_PI);
         double yiDc;
-        if(trailingEdgeWidth > 5e-4 && xiDc > 0.5) {
+        if(abs(trailingEdgeWidth) > 1e-3 && xiDc > 0.5) {
             yiDc = getBernsteinPolynomialValue(xiDc, coeffTranslated, degree, binCoeff);
             yiDc += trailingEdgeWidth;
         }
         else {
             yiDc = getBernsteinPolynomialValue(xiDc, coeff, degree, binCoeff);
         }
-        
         newPoints.push_back(Eigen::Vector2d(xiDc, yiDc));
     }
-    newPoints.push_back(Eigen::Vector2d(1, 0));
+    if(abs(trailingEdgeWidth) > 5e-4) {
+        newPoints.push_back(Eigen::Vector2d(1, getBernsteinPolynomialValue(1, coeffTranslated, degree, binCoeff)+trailingEdgeWidth));
+    }
+    else {
+        newPoints.push_back(Eigen::Vector2d(1, getBernsteinPolynomialValue(1, coeffTranslated, degree, binCoeff)));
+    }
+
     return newPoints;
 }                                                                        
 
@@ -328,11 +336,11 @@ void AirfoilFitter::initiateFitting(std::string type) {
     foil.insert(foil.end(), newLower.begin(), newLower.end());
 
     io.writingPointCloud("../Results/" + name, foil);
-    /*writingPointCloud("../Results/" + name + "_upper.txt", upper);
-    writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
-    writingPointCloud("../Results/" + name + "_compare.txt", compare);
-    writingPointCloud("../Results/" + name + "_lower.txt", lower);
-    writingPointCloud("../Results/" + name + "_newLower.txt", newLower);*/
+    /*io.writingPointCloud("../Results/" + name + "_upper.txt", upper);
+    io.writingPointCloud("../Results/" + name + "_newUpper.txt", newUpper);
+    io.writingPointCloud("../Results/" + name + "_compare.txt", compare);
+    io.writingPointCloud("../Results/" + name + "_lower.txt", lower);
+    io.writingPointCloud("../Results/" + name + "_newLower.txt", newLower);*/
 }
 
 void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile) {
@@ -348,14 +356,14 @@ void AirfoilFitter::replaceMorphedFlap(std::vector<Eigen::Vector2d>& referencePr
             lower[i][1] = -lower[i][1] + 2*upper[upper.size()-20][1];
         }
     }
-    /*if(upper.size() > 100) {
+    if(upper.size() > 100) {
         downsizeAirfoil(upper);
     }
     if(lower.size() > 100) {
         downsizeAirfoil(lower);
-    }*/
+    }
 
-    float maxX = upper[upper.size()-1][0];
+    float maxX = std::min(upper[upper.size()-1][0], lower[lower.size()-1][0]);
     std::vector<Eigen::Vector2d> tmp;
     for(int i = 0; i < referenceProfile.size(); i++) {
         if(referenceProfile[i][0] > maxX && i < referenceProfile.size() / 2) {

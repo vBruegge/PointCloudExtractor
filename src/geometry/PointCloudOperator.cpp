@@ -3,18 +3,17 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
-#include <pcl/io/pcd_io.h>
 #include <pcl/common/transforms.h>
 #include <pcl/filters/voxel_grid.h>
 
 #include "PointCloudOperator.hpp"
 
-PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing) {
+PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing, bool completeAircaft) {
     cloudNoNormals = inputCloud;
     if(cloudNoNormals->points.size()>1000000) {
         downsize();
     }
-    aligningPointCloud(fuselageGreaterThanWing);
+    aligningPointCloud(fuselageGreaterThanWing, completeAircaft);
     estimateNormals();
 }
 
@@ -23,7 +22,7 @@ PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointNormal>::Ptr in
     pcl::copyPointCloud(*inputCloud, *cloudNoNormals);
 }
 
-PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing) {
+PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing, bool completeAircaft) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZ>);
     if (pcl::io::loadPCDFile (filename, *inputCloud) == -1){
         std::cerr << "Please enter a valid cloud file" << std::endl;
@@ -35,11 +34,11 @@ PointCloudOperator::PointCloudOperator(std::string& filename, bool fuselageGreat
     else {
         downsampled = inputCloud;
     }
-    aligningPointCloud(fuselageGreaterThanWing);
+    aligningPointCloud(fuselageGreaterThanWing, completeAircaft);
     estimateNormals();
 }
 
-void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
+void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing, bool completeAircaft) {
 //moment of inertia estimating feature extractor definition
 
     std::cout << "Calculating OBB and AABB.." << std::endl;
@@ -71,7 +70,6 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
     Eigen::Affine3f inverse_transform = transform.inverse();
     pcl::transformPointCloud (*cloudNoNormals, *cloudTransformed, inverse_transform);
     pcl::transformPointCloud (*downsampled, *downsampled, inverse_transform);
-    //pcl::io::savePCDFile("transformed.txt", *downsampled);
 
     if(fuselageGreaterThanWing == true) {
         const Eigen::Vector3f translationVector (0,0,0);
@@ -82,15 +80,14 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing) {
 
         pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformationSection);
     }
-
-    float angle = getAngleXZPlane(downsampled);
-    Eigen::AngleAxisf rotate(-angle, Eigen::Vector3f::UnitX());
-    Eigen::Affine3f transformCorrected = Eigen::Affine3f::Identity();
-    transformCorrected.rotate(rotate);
-    inverse_transform = transformCorrected.inverse();
-    pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, inverse_transform);
-    pcl::transformPointCloud (*downsampled, *downsampled, transformCorrected);
-    //pcl::io::savePCDFile("transformed2.txt", *downsampled);
+    if(completeAircaft == true) {
+        float angle = getAngleXZPlane(downsampled);
+        Eigen::AngleAxisf rotate(-angle, Eigen::Vector3f::UnitX());
+        Eigen::Affine3f transformCorrected = Eigen::Affine3f::Identity();
+        transformCorrected.rotate(rotate);
+        pcl::transformPointCloud (*cloudTransformed, *cloudTransformed, transformCorrected);
+        pcl::transformPointCloud (*downsampled, *downsampled, transformCorrected);
+    }
     cloudNoNormals = cloudTransformed;
 }
 
@@ -189,8 +186,6 @@ void PointCloudOperator::estimateNormals() {
   pcl::PointCloud<pcl::PointNormal>::Ptr inputCloudWithNormals (new pcl::PointCloud<pcl::PointNormal>);
   pcl::concatenateFields(*cloudNoNormals, *cloudNormals, *inputCloudWithNormals);
 
-
-  //pcl::io::savePCDFile("mlsNormals.txt", *inputCloudWithNormals);
   std::cout << "Normal calculation complete...\n";
 
   cloud = inputCloudWithNormals;
@@ -214,7 +209,7 @@ pcl::PointCloud<pcl::PointNormal>::Ptr PointCloudOperator::estimateNormals(pcl::
   pcl::PointCloud<pcl::Normal>::Ptr cloudNormals (new pcl::PointCloud<pcl::Normal>);
 
   // Use all neighbors in a sphere of radius 2.5mm
-  ne.setRadiusSearch (8);
+  ne.setRadiusSearch (2.5);
 
   // Compute the features
   ne.compute (*cloudNormals);
@@ -291,5 +286,4 @@ void PointCloudOperator::downsize() {
     sor.setLeafSize (5, 5, 5);
     sor.filter (*smallerCloud);
     downsampled = smallerCloud;
-    pcl::io::savePCDFile("downsized.txt", *downsampled);
 }

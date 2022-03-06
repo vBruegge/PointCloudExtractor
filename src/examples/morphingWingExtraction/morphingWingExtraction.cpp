@@ -15,7 +15,7 @@ int main (int argc, char** argv)
 
     //reads the pcd file, alignes the point cloud and computes normals
     pointCloudFile = pointCloudFile + ".pcd";
-    PointCloudOperator op(pointCloudFile, true);
+    PointCloudOperator op(pointCloudFile, true, false);
 
     //possibility to generate a new sectioning file with the argument "new"
     std::string sectionFilename = argv[2];
@@ -35,13 +35,13 @@ int main (int argc, char** argv)
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances
-    float xPosFirstReference = 0.801998;
-    float xPosSecondReference = 0.399124;
+    float xPosFirstReference = 0.8008; //CellSkin, use 0.801998 for Mono
+    float xPosSecondReference = 0.418467; //CellSkin, use 0.399124 for Mono
     int indexBeforeFirstReference = 0;
     int indexAfterFirstReference = 0;
     int indexBeforeSecondReference = 0;
     int indexAfterSecondReference = 0;
-    //219.518, 441.099
+    
     for(int i = reference.size()/2; i < reference.size(); i++) {
         if(reference[i][0] < xPosFirstReference) {
             indexBeforeFirstReference = i;

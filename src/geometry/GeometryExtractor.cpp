@@ -11,7 +11,6 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_math.h>
 
-#include <pcl/io/pcd_io.h>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -28,8 +27,6 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   pass.setFilterFieldName ("x");
   pass.setFilterLimits (cuttingDistance - 0.5, cuttingDistance + 0.5);
   pass.filter (*cloudPassThrough);
-
-  //pcl::io::savePCDFile("filter1.txt", *cloudPassThrough);
  
   Eigen::Vector3f surfaceNormal (0.0, 0.0, 0.0);
   //generate an average of all normals near the cuttingDistance
@@ -70,7 +67,6 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   Eigen::Affine3f transform = transformationCuttingPlaneNormal.inverse();
   pcl::transformPointCloud (*inputCloud, *inputCloudTransformed, transform);
 
-  //pcl::io::savePCDFile("transformed.txt", *inputCloudTransformed);
   //plane definition
   pcl::ModelCoefficients::Ptr sectionCoefficients (new pcl::ModelCoefficients ());
   sectionCoefficients->values.resize (4);
@@ -81,6 +77,9 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   sectionCoefficients->values[3] = d;
 
   //Filter out points above and below a plane using pass through filtering
+  pcl::PointNormal min, max;
+  pcl::getMinMax3D(*cloudPassThrough, min, max);
+  int size = abs(min.y-max.y)*2;
   float projDistance = 0.1;
   int k = 1;
   do {
@@ -89,9 +88,7 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
     pass.setFilterLimits (sectionCoefficients->values[3]-projDistance*k, sectionCoefficients->values[3]+projDistance*k);
     pass.filter (*cloudPassThrough);
     k++;
-  } while(cloudPassThrough->size() < 700);
-
-  pcl::io::savePCDFile("filter2.txt", *cloudPassThrough);
+  } while(cloudPassThrough->size() < size && k <= 5);
 
   // project the foil
   pcl::ModelCoefficients::Ptr projectionPlane (new pcl::ModelCoefficients ());
@@ -105,11 +102,6 @@ Airfoil GeometryExtractor::sectioningCloudX(pcl::PointCloud<pcl::PointNormal>::P
   proj.setInputCloud (cloudPassThrough);
   proj.setModelCoefficients (projectionPlane);
   proj.filter (*cloudPassThrough);
-
-
-  //pcl::io::savePCDFile("proj.txt", *cloudPassThrough);
-
-  pcl::transformPointCloud (*cloudPassThrough, *cloudPassThrough, transform);
 
   Airfoil foil;
   if(sectioningType == 1) {
@@ -245,7 +237,7 @@ Airfoil GeometryExtractor::sectioningCloudZ(pcl::PointCloud<pcl::PointNormal>::P
     foil = Airfoil(cloudNoNormals, parameter);
   }
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::CuttingDistance, cuttingDistance);
-  //pcl::io::savePCDFile("foil_new.txt", *flap->section);
+
   return foil;
 }
 
@@ -259,11 +251,10 @@ void GeometryExtractor::derotateSection(Airfoil& foil){
   //vector from trailingEdge to leadingEdge
   Eigen::Vector3f centerLineVector;
   centerLineVector[0] = 0.0;
-  centerLineVector[1] = foil.getFoil()->points[indexMinMax[0]].y-foil.getFoil()->points[indexMinMax[1]].y; 
-  centerLineVector[2] = foil.getFoil()->points[indexMinMax[0]].z-foil.getFoil()->points[indexMinMax[1]].z;
-  rotationAngle = pcl::getAngle3D(Eigen::Vector3f::UnitY(), centerLineVector, false);
-  if(rotationAngle > M_PI/2)
-    rotationAngle = M_PI - rotationAngle;
+  centerLineVector[1] = foil.getFoil()->points[indexMinMax[1]].y-foil.getFoil()->points[indexMinMax[0]].y; 
+  centerLineVector[2] = foil.getFoil()->points[indexMinMax[1]].z-foil.getFoil()->points[indexMinMax[0]].z;
+  rotationAngle = pcl::getAngle3D(Eigen::Vector3f::UnitZ(), centerLineVector, false);
+  rotationAngle = M_PI/2 - rotationAngle;
 
   //rotate both clockwise and counterclockwise -> unknown direction of deflection
   pcl::PointCloud<pcl::PointXYZ>::Ptr rotated (new pcl::PointCloud<pcl::PointXYZ>);
@@ -429,9 +420,6 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
       pass.filter (*flap);
     }
 
-    //pcl::io::savePCDFile("flap.txt", *flap);
-    //pcl::io::savePCDFile("without_flap.txt", *withoutFlap);
-
     //calculate approximal normal of the foil from the mid of the foil
     pcl::PointNormal searchPoint = inputCloud->points[indexFlapPosition];
     Eigen::Vector3f normalFoil =  computeAverageNormalOfFoil(inputCloud, searchPoint, indexLeadingTrailingEdge[1], 30, 10, 1);
@@ -473,8 +461,6 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
 
     pcl::PointCloud<pcl::PointNormal>::Ptr flapRotated (new pcl::PointCloud<pcl::PointNormal>);
     pcl::transformPointCloud (*flap, *flapRotated, transformationAffine);
-
-    //pcl::io::savePCDFile("flap_rotated.txt", *flapRotated);
     
     rotationQuaternion =  Eigen::AngleAxisf(-angleFlap, Eigen::Vector3f::UnitX());
     transformationAffine = Eigen::Affine3f::Identity();
@@ -484,10 +470,7 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
     pcl::PointCloud<pcl::PointNormal>::Ptr flapInverse (new pcl::PointCloud<pcl::PointNormal>);
     pcl::transformPointCloud (*flap, *flapInverse, transformationAffine);
 
-    //pcl::io::savePCDFile("flap_rotated_inverse.txt", *flapInverse);
-
   // decide which rotation
-
     pcl::copyPointCloud(*flapRotated, *cloudNoNormals);
     std::vector<int> indexMinMax = foilTmp.findLeadingTrailingEdge();
     //vector from flap position to trailing edge
@@ -540,7 +523,6 @@ Airfoil GeometryExtractor::derotateFlap (pcl::PointCloud<pcl::PointNormal>::Ptr 
     
   //delete normals
   pcl::copyPointCloud(*foil, *cloudNoNormals);
-  //pcl::io::savePCDFile("flap_derotated.txt", *cloudNoNormals);
 
   AirfoilParameter parameters;
   parameters.dihedral = dihedral;
@@ -577,7 +559,6 @@ void GeometryExtractor::deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge,
     pass.filter (*inputCloud);
   }
 
-  //pcl::io::savePCDFile("deletedTrailingEdge.txt", *inputCloud);
   foil.setFoil(inputCloud);
   foil.setAnyAirfoilParameter(AirfoilParameter::parameterType::TrailingEdgeWidth, trailingEdgeWidth);
 }
@@ -707,7 +688,7 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
     
   //nearest neighbor search for iterating through neighboring points in none-ordered point cloud
   //setup of the search tree
-  int n = 25;
+  int n = 50;
   pcl::KdTreeFLANN<pcl::PointNormal> kdtree;
   kdtree.setInputCloud (compare);
  
@@ -786,7 +767,6 @@ void GeometryExtractor::translateSectionToReference(Airfoil& foil, pcl::PointXYZ
     for(int i = 0; i < inputCloud->points.size(); i++) {
         inputCloud->points[i].y = -inputCloud->points[i].y;
     }
-    pcl::io::savePCDFile("switched.txt", *inputCloud);
   }
 
   MorphingWingParameter params = foil.getMorphingWingParameter();
@@ -799,12 +779,10 @@ void GeometryExtractor::translateSectionToReference(Airfoil& foil, pcl::PointXYZ
 
   pcl::transformPointCloud (*inputCloud, *transformedCloud, transformationAffine);
   foil.setFoil(transformedCloud);
-  pcl::io::savePCDFile("translated.txt", *transformedCloud);
 }
 
 void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& firstReference, pcl::PointXYZ& secondReference) {
   MorphingWingParameter params = foil.getMorphingWingParameter();
-  pcl::io::savePCDFile("non-rotated.txt", *foil.getFoil());
 
   Eigen::Vector3f referenceVector;
   referenceVector << secondReference.x-firstReference.x, secondReference.y-firstReference.y, secondReference.z-firstReference.z;
@@ -847,8 +825,6 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
     rotatedSecondReference = transformationAffine.inverse() * Eigen::Vector4f(0, secondPoint.y, secondPoint.z, 0);
   }
     
-  pcl::io::savePCDFile("rotated.txt", *inputCloud);
-
   double referenceLength = Eigen::Vector2d(firstReference.y-secondReference.y, firstReference.z-secondReference.z).norm();
   double scale = referenceLength/params.referenceLength;;
 
@@ -859,7 +835,6 @@ void GeometryExtractor::derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& 
     inputCloud->points[i].y *= scale;
     inputCloud->points[i].z *= scale;
   }
-  pcl::io::savePCDFile("rotated-scaled.txt", *inputCloud);
 
   rotatedFirstReference *= scale;
   rotatedSecondReference *= scale;

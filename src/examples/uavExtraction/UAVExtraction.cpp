@@ -22,7 +22,7 @@ int main (int argc, char** argv)
     }
     // reads the converted pcd file, alignes the point cloud and computes normals
     pointCloudFile = pointCloudFile + ".pcd";
-    PointCloudOperator op(pointCloudFile, fuselageGreaterThanWing);
+    PointCloudOperator op(pointCloudFile, fuselageGreaterThanWing, true);
 
     //start the section generation gui if the argument is "new", otherwise use a given sectioning file
     std::string sectionFilename = argv[3];
