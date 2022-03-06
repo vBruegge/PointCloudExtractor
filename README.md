@@ -54,3 +54,14 @@ To use the building operation of nix, change the directory of a terminal to your
 
 `nix build morphingWingExtraction` will build the morphing wing example.
 `nix build uavExtraction` will build the uavExtraction example.
+
+# Section generation file
+The section generation file has a specific, pre-defined structure.  Examples of files are presented in the following:
+1. For a complete aircraft with a horizontal and vertical tail or a v-tail and a fin, the sectioning file is defined as:
+    ```h
+    -750
+    fuselage -650 500 450 300 -75 -180 -350 -500 -750
+    horizontal_tail 50 150 275 360
+    wing 110 350 675 1010 1150 1350 1425 1450
+    vertical_tail -40 0 50 125 145```
+
