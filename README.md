@@ -58,10 +58,13 @@ To use the building operation of nix, change the directory of a terminal to your
 # Section generation file
 The section generation file has a specific, pre-defined structure.  Examples of files are presented in the following:
 1. For a complete aircraft with a horizontal and vertical tail or a v-tail and a fin, the sectioning file is defined as:
-    ```h
+    ```
+    h
     -750
     fuselage -650 500 450 300 -75 -180 -350 -500 -750
-    horizontal_tail 50 150 275 360
     wing 110 350 675 1010 1150 1350 1425 1450
-    vertical_tail -40 0 50 125 145```
+    horizontal_tail 50 150 275 360
+    vertical_tail -40 0 50 125 145
+
+Here, the second line defines a distance between the wing and tail. The point cloud is split in two this distance to enable sectioning the and tail separetely. The following lines define the sectioning distances dependening on the center of mass. For an ease of use, the GUI can be used to generate the file for the first time. Please note, that the lines for the wing and horizontal tail sections can be exchanged.
 
