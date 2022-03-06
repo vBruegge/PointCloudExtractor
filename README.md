@@ -17,6 +17,5 @@ The second example is the extraction of a morphing wing. In this case, not the l
 The examples can be found in `src/examples`.
 
 # Nix
-A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your distribution. In this case, you can use nix to build your example project. This has the advantage that no other dependency has to be installed on the machine.
-To use the building operation of nix, change the directory of a terminal to your git and type
-`nix build`.
+A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your distribution. In this case, you can use nix to build all example projects. This has the advantage that no other dependency has to be installed on the machine.
+To use the building operation of nix, change the directory of a terminal to your git and type `nix build`. The executables will be found in `result/bin`.
