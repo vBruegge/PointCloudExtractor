@@ -50,11 +50,15 @@ public:
      * @brief fits given points with a bernstein polynomial specified by Kulfan
      * 
      * @param points points which should be fitted
-     * @param trailingEdgeWidth width of the trailing edge
      * @return std::vector<Eigen::Vector2d> new points of the fitting
      */
     std::vector<Eigen::Vector2d> bernsteinPolynomialFit(std::vector<Eigen::Vector2d>& points);
 
+    /**
+     * @brief adds all reference points of the reference profile that have a greater x-value than any point of the extracted airfoil
+     * 
+     * @param referenceProfile 2D-points of the reference profile
+     */
     void replaceMorphedFlap(std::vector<Eigen::Vector2d>& referenceProfile);
 
 private:

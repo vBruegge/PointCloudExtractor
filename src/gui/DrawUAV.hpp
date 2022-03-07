@@ -35,7 +35,7 @@ private:
 /**
  * @brief draws different sights of the uav to determine the distances where to cut
  * 
- * @param cloud 
+ * @param cloud which is sectioned
  */
 void sectionGenerationGUI(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 

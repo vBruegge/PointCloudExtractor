@@ -14,11 +14,11 @@ Two example cases were examined. First of all, an extraction of a complete aircr
 
 The second example is the extraction of a morphing wing. In this case, not the leading and trailing edge of the extracted foil can be used for rotation and aligning purposes. So, extra references have to be applied before the scanning process which are then used to fit the extracted wing on the reference airfoil. The references are deleted after this fitting.
 
-The examples can be found in `src/examples`.
+The examples can be found in `examples`.
 
 ### uavExtraction
 
-The code for the UAV extraction can be found in `src/examples/uavExtraction`.
+The code for the UAV extraction can be found in `examples/uavExtraction`.
 
 The programm requires four inputs:
 - the point cloud which should be sectioned as TXT-File in the build folder
@@ -26,17 +26,17 @@ The programm requires four inputs:
 - the name of the section generation file in the build folder or a "new"
 - type of sectioning (0 for no flaps rotation, 1 for flap rotation)
 
-`./src/examples/uavExtraction/build/uavExtraction 15tol.txt n section-generation.txt 0`
+`./examples/uavExtraction/build/uavExtraction 15tol.txt n section-generation.txt 0`
 
 This would result in the extraction of the point cloud named "15tol.txt" which was copied in the build folder beforehand. It is a normal configuration, so the wingspan is greater than the fuselage. Therefore no extra rotation is needed (n). The sections are predefined in "section-generation.txt" (also in the build folder). The aircraft was scanned without the flaps actuated, therefore the rotation logic is skipped.
 
-`./src/examples/uavExtraction/build/uavExtraction lizard.txt y new 1`
+`./examples/uavExtraction/build/uavExtraction lizard.txt y new 1`
 
 This would result of the point cloud named "lizard.txt". It was copied in the build folder and is a jet with a significant greater fuselage as the wingspan. Therefore a extra rotation is needed (y). There is no sectioning file yet, a new one has to be generated (new) using a GUI. The flaps were actuated in the scanning process and should be derotated (1).
 
 ### morphingWingExtraction
 
-The code for the morphing wing extraction can be found in `src/examples/morphingWingExtraction`.
+The code for the morphing wing extraction can be found in `examples/morphingWingExtraction`.
 
 The programm requires four inputs:
 - the point cloud which should be sectioned as TXT-File in the build folder
@@ -44,7 +44,7 @@ The programm requires four inputs:
 - the name of the reference foil in the build folder
 - the position where the extracted foil should be replaced by the reference foil (e.g. flap position)
 
-`./src/examples/morphingWingExtraction/build/morphingWingExtraction DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84`
+`./examples/morphingWingExtraction/build/morphingWingExtraction DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84`
 
 This results in the sectioning of the point cloud "DemoMono.txt". The position where to section are specified in the "section-generation.txt". The reference airfoil is named "B106_optairfoil.dat". The flap should be replaced by the reference foil, its position is 0.84.
 
@@ -57,8 +57,8 @@ To use the building operation of nix, there are two possible ways:
     - `nix build .#morphingWingExtraction`for building the morphing wing extraction example
 2. Building the git repository without cloning:
     In this case, the repository is cloned by nix and builded in the same step. Enter:
-    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git#uavExtraction` for building the aircraft extraction example
-    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git#morphingWingExtraction` for building the morphing wing extraction example
+    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction` for building the aircraft extraction example
+    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#morphingWingExtraction` for building the morphing wing extraction example
 
 The executeables can be found in `result/bin`.
 

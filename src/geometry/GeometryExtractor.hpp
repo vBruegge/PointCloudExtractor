@@ -67,8 +67,21 @@ public:
      */
     void deleteTrailingEdge(Airfoil& foil, int indexTrailingEdge, float distanceFromTrailingEdge);
 
+    /**
+     * @brief find the reference points of the extracted morphing wing by a comparison if the normal vectors of neighbouring points
+     * 
+     * @param inputCloud sectioned morphing wing with normals
+     * @return Airfoil sectioned morphing wing without normals, deleted references and additional morphing wing parameters
+     */
     Airfoil findingMorphedReferencePoints(pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud);
 
+    /**
+     * @brief rotates, scales and translates the detected reference points of the airfoil on the given reference points
+     * 
+     * @param foil sectioned morphing wing
+     * @param firstReference coordinates of the first reference point
+     * @param secondReference coordinates of the second reference point
+     */
     void derotateToReferencePoints(Airfoil& foil, pcl::PointXYZ& firstReference, pcl::PointXYZ& secondReference);
 
 private:

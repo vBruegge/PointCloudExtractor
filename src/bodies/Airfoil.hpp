@@ -42,7 +42,7 @@ public:
      * @brief Construct a new Airfoil object
      * 
      * @param foil_ Point Cloud of the foil
-     * @param parameters_ known airfoil parameter (e.g. chord)
+     * @param parameters_ known airfoil parameter
      */
     Airfoil(pcl::PointCloud<pcl::PointXYZ>::Ptr foil_, AirfoilParameter& parameters_);
 
@@ -81,7 +81,7 @@ public:
     /**
      * @brief Set the one of the Morphing Wing Parameter
      * 
-     * @param type parameter type (CuttingDistance, Scale, RotationAnge...)
+     * @param type parameter type (CuttingDistance, Scale, RotationAngle...)
      * @param value value of the parameter
      */
     void setAnyMorphingWingParameter(MorphingWingParameter::parameterType type, float value);
