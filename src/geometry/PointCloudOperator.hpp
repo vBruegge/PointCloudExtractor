@@ -14,7 +14,7 @@ public:
      * 
      * @param inputCloud point cloud which should be operated
      * @param fuselageGreaterThanWing boolean if the fuselage is greater then the wing wide (e.g. jets)
-     * @param splittingDistance distance between the wing and tail where the fuselage will be sectioned
+     * @param completeAircraft boolean if a complete aircraft is sectioned -> possibility of wrong alignment
      */
     PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud, bool fuselageGreaterThanWing, bool completeAircaft);
 
@@ -30,6 +30,7 @@ public:
      * 
      * @param filename filepath and name of the point cloud (PCD) file
      * @param fuselageGreaterThanWing boolean if the fuselage is greater then the wing wide (e.g. jets)
+     * @param completeAircraft boolean if a complete aircraft is sectioned -> possibility of wrong alignment
      */
     PointCloudOperator(std::string& filename, bool fuselageGreaterThanWing, bool completeAircaft);
 
@@ -57,12 +58,6 @@ public:
      * @return pcl::PointCloud<pcl::PointXYZ>::Ptr pointer to the point cloud without the computed normals
      */
     pcl::PointCloud<pcl::PointXYZ>::Ptr getPointCloudWithoutNormals();
-
-    /**
-     * @brief checks if the orientation of the point cloud is right and rotates if needed
-     * @param splittingDistance distance betweeen the wing and tail
-     * 
-     */
     
 private:
     void estimateNormals();

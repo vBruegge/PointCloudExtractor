@@ -68,6 +68,12 @@ public:
      */
     void convertTXTToPCDFile(std::string& filename);
 
+    /**
+     * @brief reads a DAT-file of an airfoil and saves the coordinates in a vector
+     * 
+     * @param filename name of the airfoil file
+     * @return std::vector<Eigen::Vector2d> 2D-coordinates of the airfoil
+     */
     std::vector<Eigen::Vector2d> readAirfoilDATFile(const std::string& filename);
 
 private:

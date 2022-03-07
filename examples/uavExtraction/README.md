@@ -67,7 +67,7 @@ The fuselage is sectioned in this part. The operations are for every fuselage se
 - fit the fuselage with a superellipse (optional fits for circles and ellipses were also implemented)
 - save the fuselage parameteres (e.g width height, center)
 
-``
+```
 std::ofstream aircraftDataFile;
 aircraftDataFile.open("../Results/aircraftDataFile.csv", std::fstream::out);
 io.writingFuselageDataInCSV(aircraftDataFile, dataFuselage, fuselageSections.size());
