@@ -38,26 +38,22 @@ int main (int argc, char** argv)
     float xPosFirstReference = 0.8008; //CellSkin, use 0.801998 for Mono
     float xPosSecondReference = 0.418467; //CellSkin, use 0.399124 for Mono
     int indexBeforeFirstReference = 0;
-    int indexAfterFirstReference = 0;
     int indexBeforeSecondReference = 0;
-    int indexAfterSecondReference = 0;
-    
+
     for(int i = reference.size()/2; i < reference.size(); i++) {
         if(reference[i][0] < xPosFirstReference) {
             indexBeforeFirstReference = i;
-            indexAfterFirstReference = i+1;
         }
         if(reference[i][0] < xPosSecondReference) {
             indexBeforeSecondReference = i;
-            indexAfterSecondReference = i+1;
         }
     }
-    Eigen::Vector2d gradient = reference[indexAfterFirstReference]-reference[indexBeforeFirstReference];
+    Eigen::Vector2d gradient = reference[indexBeforeFirstReference+1]-reference[indexBeforeFirstReference];
     pcl::PointXYZ firstReference(0, xPosFirstReference, reference[indexBeforeFirstReference][1] +
-        gradient[1]/gradient[0]*(reference[indexAfterFirstReference][0]-xPosFirstReference));
-    gradient = reference[indexAfterSecondReference]-reference[indexBeforeSecondReference];
+        gradient[1]/gradient[0]*(reference[indexBeforeFirstReference+1][0]-xPosFirstReference));
+    gradient = reference[indexBeforeSecondReference+1]-reference[indexBeforeSecondReference];
     pcl::PointXYZ secondReference(0, xPosSecondReference, reference[indexBeforeSecondReference][1] +
-        gradient[1]/gradient[0]*(reference[indexAfterSecondReference][0]-xPosSecondReference));
+    gradient[1]/gradient[0]*(reference[indexBeforeSecondReference+1][0]-xPosSecondReference));
     
     //morphing wing sectioning
     float positionFlap = std::stof(argv[4]);
