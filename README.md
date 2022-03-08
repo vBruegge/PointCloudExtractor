@@ -50,6 +50,8 @@ This results in the sectioning of the point cloud "DemoMono.txt". The position w
 
 # Nix
 A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your machine. In this case, you can use nix to build all example projects. This has the advantage that no other dependency is needed and no libraries have to be installed on the machine.
+If you haven't accended to the realm of Arch yet, but living in the twilight of Ubuntu or even WSL (2) for Windows, please refer to this instruction for installation:
+https://ariya.io/2020/05/nix-package-manager-on-ubuntu-or-debian
 To use the building operation of nix, there are two possible ways:
 1. Clone the repository beforehand and then use nix for building:
     In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and enter:
