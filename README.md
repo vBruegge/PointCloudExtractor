@@ -5,9 +5,9 @@ This is a library for extracting geometries of a 3D scan. The main focus lies on
 
 # Used librarys
 
-- Point Cloud Library (PCL)
-- GNU Scientific Library (GSL) v2.7
-- Simple and Fast Multimedia Library (SFML)
+- Point Cloud Library (PCL) (`sudo apt-get install python3-pcl pcl-tools`)
+- GNU Scientific Library (GSL) v2.7 (`sudo apt-get install libgsl23`)
+- Simple and Fast Multimedia Library (SFML) (`sudo apt-get install -y libsfml-dev`)
 
 # Examples
 Two example cases were examined. First of all, an extraction of a complete aircraft was executed. In this case, fuselage, wing and tail geometries are extracted of the point cloud. In addition, geometric characteristics of the aircraft like the dihedral or the twist of the wing and tail is computed. All extracted foils are fitted with a CST parametrization using Bernstein polynomials and a shape function.
