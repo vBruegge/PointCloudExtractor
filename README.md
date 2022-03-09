@@ -56,8 +56,8 @@ https://ariya.io/2020/05/nix-package-manager-on-ubuntu-or-debian
 To use the building operation of nix, there are two possible ways:
 1. Clone the repository beforehand and then use nix for building:
     In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and enter:
-    - `nix build .#uavExtraction` for building the aircraft extraction example
-    - `nix build .#morphingWingExtraction`for building the morphing wing extraction example
+    - `nix build .#uavExtraction` for building the aircraft extraction example (if you get error messages about experimental features like "nix-command" and "flakes" being disabled, use the following command to build: `nix --extra-experimental-features nix-command --extra-experimental-features flakes build .#uavExtraction`).
+    - `nix build .#morphingWingExtraction`for building the morphing wing extraction example (if you get error messages about experimental features like "nix-command" and "flakes" being disabled, use the following command to build: `nix --extra-experimental-features nix-command --extra-experimental-features flakes build .#morphingWingExtraction`).
 2. Building the git repository without cloning:
     In this case, the repository is cloned by nix and builded in the same step. Enter:
     - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction` for building the aircraft extraction example
