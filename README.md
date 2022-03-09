@@ -18,7 +18,8 @@ The examples can be found in `examples`.
 
 ### uavExtraction
 
-The code for the UAV extraction can be found in `examples/uavExtraction`.
+The code for the UAV extraction can be found in `examples/uavExtraction`.  
+The following examples assume, that you have build the executable using "by foot", not using flake. If you have used flake, the executable is in the folder `result/bin` and this is where the point cloud is supposed to go (maybe you have to adjust the permissions to copy something inside).
 
 The programm requires four inputs:
 - the point cloud which should be sectioned as TXT-File in the build folder
