@@ -53,7 +53,7 @@ A nix flake was added to the repository. Nix is a package manager which has to b
 If you haven't ascended to the realm of Arch yet, but living in the twilight of Ubuntu or even WSL (2) for Windows, please refer to this instruction for installation:  
 https://ariya.io/2020/05/nix-package-manager-on-ubuntu-or-debian
 
-To use the building operation of nix, there are two possible ways:
+To use the building operation of nix, there are two possible ways. Please be aware, that you can only have one build )(either the uavExtraction or the morphingWingExtraction. If you want to switch from one tool to the other, delete the *result* folder that is created by nix):
 1. Clone the repository beforehand and then use nix for building:
     In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and enter:
     - `nix build .#uavExtraction` for building the aircraft extraction example (if you get error messages about experimental features like "nix-command" and "flakes" being disabled, use the following command to build: `nix --extra-experimental-features nix-command --extra-experimental-features flakes build .#uavExtraction`).
