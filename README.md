@@ -5,8 +5,8 @@ This is a library for extracting geometries of a 3D scan. The main focus lies on
 
 # Used librarys
 
-- Point Cloud Library (PCL) (`sudo apt-get install python3-pcl pcl-tools`)
-- GNU Scientific Library (GSL) v2.7 (`sudo apt-get install libgsl23`)
+- Point Cloud Library (PCL) (`sudo apt-get install libpcl-dev`)
+- GNU Scientific Library (GSL) v2.7 (`sudo apt-get install libgsl-dev`)
 - Simple and Fast Multimedia Library (SFML) (`sudo apt-get install -y libsfml-dev`)
 
 # Examples
