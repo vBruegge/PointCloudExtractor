@@ -98,15 +98,23 @@ To use the building operation of nix, there are two possible ways. Please be awa
 1. Clone the repository beforehand and then use nix for building:
     In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and run
     - for building the aircraft extraction example:
-    ```nix build .#uavExtraction```
+    ```
+    nix build .#uavExtraction
+    ```
     - for building the morphing wing extraction example
-    ```nix build .#morphingWingExtraction```
+    ```
+    nix build .#morphingWingExtraction
+    ```
 2. Building the git repository without cloning:
     In this case, the repository is cloned by nix and builded in the same step. Run
     - for building the aircraft extraction example:
-    ```nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction```
+    ```
+    nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction
+    ```
     - for building the morphing wing extraction example
-    ```nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#morphingWingExtraction```
+    ```
+    nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#morphingWingExtraction
+    ```
 
 The executeables can be found in `result/bin`.
 
