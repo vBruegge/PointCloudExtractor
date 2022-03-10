@@ -12,8 +12,9 @@ bool sortIncrease(const Eigen::Vector2d &a, const Eigen::Vector2d &b) {
     return a[0]<b[0];
 }
 
-AirfoilFitter::AirfoilFitter(Airfoil& foil) {
+AirfoilFitter::AirfoilFitter(Airfoil& foil, std::string sourceFolder) {
     //copy y- and z-distance in array
+    io = IOHandler(sourceFolder);
     std::vector<Eigen::Vector2d> points;
     points.resize((int) foil.getFoil()->size());
     for(int i = 0; i < foil.getFoil()->size(); i++) {
@@ -63,7 +64,6 @@ void AirfoilFitter::computeCompareValues(Airfoil& foil) {
     pass.filter(*cloudPassThrough);
     pcl::getMinMax3D(*cloudPassThrough, minPt, maxPt);
     compare_[compare_.size()-1] = Eigen::Vector2d(maxPt.y, (minPt.z+maxPt.z)/2);
-    std::cout << compare_[compare_.size()-1];
 
     for(int i = 1; i < iterator-1; i++) {
       pass.setFilterLimits (beginSection + i*sectionDisX - dis, beginSection + i*sectionDisX + dis);

@@ -12,7 +12,7 @@ public:
      * 
      * @param section_ fuselage section
      */
-    FuselageFitter(Fuselage& section_);
+    FuselageFitter(Fuselage& section_, std::string sourceFolder);
 
     /**
      * @brief fits the saved fuselage cloud with a circle

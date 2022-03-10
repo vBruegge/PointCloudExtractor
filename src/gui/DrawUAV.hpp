@@ -6,6 +6,7 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
 #include <vector>
+#include <string>
 
 class UAV : public sf::Drawable, public sf::Transformable
 {
@@ -37,6 +38,6 @@ private:
  * 
  * @param cloud which is sectioned
  */
-void sectionGenerationGUI(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+void sectionGenerationGUI(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string sourceFolder, std::string filename);
 
 #endif

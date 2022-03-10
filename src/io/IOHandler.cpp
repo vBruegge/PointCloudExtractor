@@ -5,8 +5,10 @@
 
 #include "IOHandler.hpp"
 
+IOHandler::IOHandler(std::string sourceFolder_) : sourceFolder(sourceFolder_) {};
+
 void IOHandler::writingPointCloud(const std::string& filename, const std::vector<Eigen::Vector2d>& points) {
-    std::ofstream fout( filename.c_str());
+    std::ofstream fout(sourceFolder + "/Results/" + filename);
     fout << std::setprecision(10);
 	if( fout.fail()) {
 		std::cout << "Error: Could not open file";

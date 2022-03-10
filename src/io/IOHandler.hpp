@@ -13,6 +13,14 @@ class IOHandler {
 public:
 
     /**
+     * @brief constructs IOHandler
+     * 
+     * @params sourceFolder_ source folder of the repository
+     */
+    IOHandler(std::string sourceFolder_);
+    IOHandler() = default;
+
+    /**
      * @brief writes an airfoil DAT file
      * 
      * @param filename name of the file
@@ -78,6 +86,8 @@ public:
 
 private:
     void readLineInVector(std::string& line, std::string& type, std::vector<float>& sections);
+
+    std::string sourceFolder;
 };
 
 #endif

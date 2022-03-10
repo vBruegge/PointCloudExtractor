@@ -215,7 +215,6 @@ int Airfoil::findTrailingEdge() {
   kdtree.nearestKSearch (centerTrailingEdge, 1, pointIndexSearch, pointDistanceSearch);
   indexTrailingEdge = pointIndexSearch[0];
 
-  //std::cout << inputCloud->points[indexTrailingEdge].x << " "  << inputCloud->points[indexTrailingEdge].y << " " << inputCloud->points[indexTrailingEdge].z << std::endl;
   return indexTrailingEdge;
 }
 
