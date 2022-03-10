@@ -63,7 +63,7 @@ int main (int argc, char** argv)
     }
 
     std::ofstream aircraftDataFile;
-    aircraftDataFile.open("../Results/aircraftDataFile.csv", std::fstream::out);
+    aircraftDataFile.open(sourceFolder + "/Results/aircraftDataFile.csv", std::fstream::out);
     io.writingFuselageDataInCSV(aircraftDataFile, dataFuselage, fuselageSections.size());
 
     //sectioning wing
