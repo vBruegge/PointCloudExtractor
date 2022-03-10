@@ -5,60 +5,98 @@ This is a library for extracting geometries of a 3D scan. The main focus lies on
 
 # Used librarys
 
-- Point Cloud Library (PCL) (`sudo apt-get install libpcl-dev`)
-- GNU Scientific Library (GSL) v2.7 (`sudo apt-get install libgsl-dev`)
-- Simple and Fast Multimedia Library (SFML) (`sudo apt-get install -y libsfml-dev`)
+- Point Cloud Library (PCL)
+- GNU Scientific Library (GSL) v2.7
+- Simple and Fast Multimedia Library (SFML)
+
+For the installation of the libraries on an Ubuntu machine use this:
+```
+sudo apt-get install libpcl-dev libgsl-dev libsfml-dev
+```
+Note: this is not necessary if you use the nix build option instead (see below).
 
 # Examples
 Two example cases were examined. First of all, an extraction of a complete aircraft was executed. In this case, fuselage, wing and tail geometries are extracted of the point cloud. In addition, geometric characteristics of the aircraft like the dihedral or the twist of the wing and tail is computed. All extracted foils are fitted with a CST parametrization using Bernstein polynomials and a shape function.
 
 The second example is the extraction of a morphing wing. In this case, not the leading and trailing edge of the extracted foil can be used for rotation and aligning purposes. So, extra references have to be applied before the scanning process which are then used to fit the extracted wing on the reference airfoil. The references are deleted after this fitting.
 
-The examples can be found in `examples`.
+The examples can be found in `examples/`.
 
 ### uavExtraction
 
 The code for the UAV extraction can be found in `examples/uavExtraction`.  
-The following examples assume, that you have build the executable using "by foot", not using flake. If you have used flake, the executable is in the folder `result/bin` and this is where the point cloud is supposed to go (maybe you have to adjust the permissions to copy something inside). When being in the folder *result/bin*, you can execute the *uavExtraction* by typing `./uavExtraction`
+The point cloud is supposed to be in a directery called "Scans" in the root directory of this repository. If you have generated a sectioning file berforehand, this should also be in this directory. Two examplary program execution are presented below, one if you have build the project with the nix flake and one without. If you have built the tool using the nix flake, your executeable can be found in `result/bin`.
 
-The programm requires four inputs:
-- the point cloud which should be sectioned as TXT-File in the build folder
+The programm requires five inputs:
+- the absolute path to the root directory of the repository (use $PWD if you execute the program from the root directory)
+- the point cloud which should be sectioned as TXT-File in the "Scans" folder
 - a boolean (y/n) if the fuselage is greater than the wing (e.g. jets)
-- the name of the section generation file in the build folder or a "new"
+- the name of the section generation file in the "Scans" folder or a "new"
 - type of sectioning (0 for no flaps rotation, 1 for flap rotation)
 
-`./examples/uavExtraction/build/uavExtraction 15tol.txt n section-generation.txt 0`
+`./result/bin/uavExtraction $PWD 15tol.txt n section-generation.txt 0`
 
-This would result in the extraction of the point cloud named "15tol.txt" which was copied in the build folder beforehand. It is a normal configuration, so the wingspan is greater than the fuselage. Therefore no extra rotation is needed (n). The sections are predefined in "section-generation.txt" (also in the build folder). The aircraft was scanned without the flaps actuated, therefore the rotation logic is skipped.
+This would result in the extraction of the point cloud named "15tol.txt" which was copied in the "Scans" folder beforehand. It is a normal configuration, so the wingspan is greater than the fuselage. Therefore no extra rotation is needed (n). The sections are predefined in "section-generation.txt" (also in the "Scans" folder). The aircraft was scanned without the flaps actuated, therefore the rotation logic is skipped.
 
-`./examples/uavExtraction/build/uavExtraction lizard.txt y new 1`
+**Important:** Unfortunately, there is a driver problem with glib which is a dependency of the GUI. If you want to use the GUI for defining the sections, you **can not** build your executable with nix. Instead you have to install the needed libraries (take care about the right versions) and build the project using cmake. In this case your workflow would be:
+```
+cd examples/uavExtraction
+mkdir build
+cd build
+cmake ..
+make
+./uavExtraction ../../.. lizard.txt y new 1
+```
 
-This would result of the point cloud named "lizard.txt". It was copied in the build folder and is a jet with a significant greater fuselage as the wingspan. Therefore a extra rotation is needed (y). There is no sectioning file yet, a new one has to be generated (new) using a GUI. The flaps were actuated in the scanning process and should be derotated (1).
+This would result in the sectioning of the point cloud named "lizard.txt". It was copied in the "Scans" folder and is a jet with a significant greater fuselage as the wingspan. Therefore a extra rotation is needed (y). There is no sectioning file yet, a new one has to be generated (new) using a GUI. The flaps were actuated in the scanning process and should be derotated (1).
 
 ### morphingWingExtraction
 
 The code for the morphing wing extraction can be found in `examples/morphingWingExtraction`.
+The point cloud is supposed to be in a directery called "Scans" in the root directory of this repository. If you have generated a sectioning file berforehand, this should also be in this directory. Two examplary program execution are presented below, one if you have build the project with the nix flake and one without. If you have built the tool using the nix flake, your executeable can be found in `result/bin`.
 
-The programm requires four inputs:
+The programm requires five inputs:
+- the absolute path to the root directory of the repository (use $PWD if you execute the program from the root directory)
 - the point cloud which should be sectioned as TXT-File in the build folder
 - the name of the section generation file in the build folder or a "new"
 - the name of the reference foil in the build folder
 - the position where the extracted foil should be replaced by the reference foil (e.g. flap position)
 
-`./examples/morphingWingExtraction/build/morphingWingExtraction DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84`
+`./result/bin/morphingWingExtraction $PWD DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84`
 
 This results in the sectioning of the point cloud "DemoMono.txt". The position where to section are specified in the "section-generation.txt". The reference airfoil is named "B106_optairfoil.dat". The flap should be replaced by the reference foil, its position is 0.84.
 
-# Nix
-A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your machine. In this case, you can use nix to build all example projects. This has the advantage that no other dependency is needed and no libraries have to be installed on the machine.  
-If you haven't ascended to the realm of Arch yet, but living in the twilight of Ubuntu or even WSL (2) for Windows, please refer to this instruction for installation:  
-https://ariya.io/2020/05/nix-package-manager-on-ubuntu-or-debian
+**Important:** Unfortunately, there is a driver problem with glib which is a dependency of the GUI. If you want to use the GUI for defining the sections, you **can not** build your executable with nix. Instead you have to install the needed libraries (take care about the right versions) and build the project using cmake. Please refer to the section above for an example.
 
-To use the building operation of nix, there are two possible ways. Please be aware, that you can only have one build )(either the uavExtraction or the morphingWingExtraction. If you want to switch from one tool to the other, delete the *result* folder that is created by nix):
+# Nix
+A nix flake was added to the repository. Nix is a package manager which has to be installed natively on your machine. In this case, you can use nix to build all example projects. This has the advantage that no other dependency is needed and no libraries have to be installed on the machine.
+
+### Installation on Ubuntu
+For installing the nix package manager run this
+```
+$ sh <(curl -L https://nixos.org/nix/install) --no-daemon
+```
+For being able to handle the nix flake, you have to install this package
+```
+nix-env -iA nixpkgs.nixFlakes
+```
+and add the following line to `~/.config/nix/nix.conf`
+```
+experimental-features = nix-command flakes
+```
+You can verify your setup with
+```
+nix flake --help
+```
+### Installation on other distribution
+If you use another distribution, you sould have enough knowledge to get this done without an instruction, if not, then refer to your mighty friend google.
+
+### Building with the nix flake
+To use the building operation of nix, there are two possible ways. Please be aware, that you can only have one build (either the uavExtraction or the morphingWingExtraction). If you want to switch from one tool to the other, rebuild the wanted package.
 1. Clone the repository beforehand and then use nix for building:
     In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and enter:
-    - `nix build .#uavExtraction` for building the aircraft extraction example (if you get error messages about experimental features like "nix-command" and "flakes" being disabled, use the following command to build: `nix --extra-experimental-features nix-command --extra-experimental-features flakes build .#uavExtraction`).
-    - `nix build .#morphingWingExtraction`for building the morphing wing extraction example (if you get error messages about experimental features like "nix-command" and "flakes" being disabled, use the following command to build: `nix --extra-experimental-features nix-command --extra-experimental-features flakes build .#morphingWingExtraction`).
+    - `nix build .#uavExtraction` for building the aircraft extraction example
+    - `nix build .#morphingWingExtraction`for building the morphing wing extraction example
 2. Building the git repository without cloning:
     In this case, the repository is cloned by nix and builded in the same step. Enter:
     - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction` for building the aircraft extraction example
