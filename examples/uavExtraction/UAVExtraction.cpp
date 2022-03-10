@@ -1,4 +1,5 @@
 #include <string>
+#include <boost/filesystem.hpp>
 
 #include "PointCloudOperator.hpp"
 #include "GeometryExtractor.hpp"
@@ -9,13 +10,18 @@
 
 int main (int argc, char** argv)
 {
+    //create result folder
+    std::string sourceFolder = argv[1];
+    if(boost::filesystem::is_directory(sourceFolder + "Results") == false)
+        boost::filesystem::create_directory(sourceFolder + "/Results");
+
     //convert the given point cloud in a valid PCD file
-    std::string pointCloudFile = argv[1];
-    IOHandler io;
+    std::string pointCloudFile = sourceFolder + "/Scans/" + argv[2];
+    IOHandler io(sourceFolder);
     io.convertTXTToPCDFile(pointCloudFile);
 
     // check if the fuselage is greater than the wing width -> additional rotation needed
-    std::string fuselageWidth = argv[2];
+    std::string fuselageWidth = argv[3];
     bool fuselageGreaterThanWing = false;
     if(fuselageWidth == "y") {
         fuselageGreaterThanWing = true;
@@ -25,11 +31,13 @@ int main (int argc, char** argv)
     PointCloudOperator op(pointCloudFile, fuselageGreaterThanWing, true);
 
     //start the section generation gui if the argument is "new", otherwise use a given sectioning file
-    std::string sectionFilename = argv[3];
+    std::string sectionFilename = argv[4];
     if(sectionFilename == "new") {
-        sectionGenerationGUI(op.getPointCloudWithoutNormals());
-        sectionFilename = "section-generation.txt";
+        sectionFilename = pointCloudFile + "_section-generation.txt";
+        sectionGenerationGUI(op.getPointCloudWithoutNormals(), sourceFolder, sectionFilename);
     }
+    else
+        sectionFilename = sourceFolder + "/Scans/" + sectionFilename;
 
     //reads the given sectioning file !all vectors are needed even if there are no sections which should be generated 
     std::vector<float> fuselageSections, wingSections, horizontalTailSections, verticalTailSections;
@@ -49,17 +57,17 @@ int main (int argc, char** argv)
     FuselageParameter dataFuselage[fuselageSections.size()];
     for(int i = 0; i < fuselageSections.size(); i++) {
         Fuselage section = extract.sectioningCloudY(fuselage, fuselageSections[i]);
-        FuselageFitter fitFuselage(section);
+        FuselageFitter fitFuselage(section, sourceFolder);
         dataFuselage[i] = fitFuselage.superellipseFit();
         std::cout << "Writing fuselage complete...\n";
     }
 
     std::ofstream aircraftDataFile;
-    aircraftDataFile.open("../Results/aircraftDataFile.csv", std::fstream::out);
+    aircraftDataFile.open(sourceFolder + "/Results/aircraftDataFile.csv", std::fstream::out);
     io.writingFuselageDataInCSV(aircraftDataFile, dataFuselage, fuselageSections.size());
 
     //sectioning wing
-    int sectioningType = std::stoi(argv[4]);
+    int sectioningType = std::stoi(argv[5]);
     AirfoilParameter dataWing[wingSections.size()];
     std::string sectionType = "wing";
     for(int i = 0; i < wingSections.size(); i++) {
@@ -74,7 +82,7 @@ int main (int argc, char** argv)
         else {
             section.generateMissingAirfoilParameter(sectionType, dataWing[0].posLeadingEdge);
         }
-        AirfoilFitter fitAirfoil(section);
+        AirfoilFitter fitAirfoil(section, sourceFolder);
         fitAirfoil.initiateFitting();
         dataWing[i] = section.getAirfoilParameter();
         std::cout << "Writing wing complete...\n";
@@ -97,7 +105,7 @@ int main (int argc, char** argv)
         else {
             section.generateMissingAirfoilParameter(sectionType, dataHTail[0].posLeadingEdge);
         }
-        AirfoilFitter fitAirfoil(section);
+        AirfoilFitter fitAirfoil(section, sourceFolder);
         fitAirfoil.initiateFitting();
         dataHTail[i] = section.getAirfoilParameter();
         std::cout << "Writing horizontal tail complete...\n";
@@ -120,7 +128,7 @@ int main (int argc, char** argv)
         else {
             section.generateMissingAirfoilParameter(sectionType, dataVTail[0].posLeadingEdge);
         }
-        AirfoilFitter fitAirfoil(section);
+        AirfoilFitter fitAirfoil(section, sourceFolder);
         fitAirfoil.initiateFitting();
         dataVTail[i] = section.getAirfoilParameter();
         std::cout << "Writing vertical tail complete...\n";

@@ -15,7 +15,7 @@ public:
      * 
      * @param foil airfoil section which is the fitted
      */
-    AirfoilFitter(Airfoil& foil);
+    AirfoilFitter(Airfoil& foil, std::string sourceFolder);
 
     /**
      * @brief executes all needed operations for a complete fitting

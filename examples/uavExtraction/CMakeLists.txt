@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10)
 
 project(uavExtraction)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
 
 find_package(PCL 1.7 REQUIRED)
 find_package(Eigen REQUIRED)
@@ -38,7 +37,12 @@ set(SRCS
     ${CMAKE_SOURCE_DIR}/../../src/bodies/Fuselage.cpp
     UAVExtraction.cpp)
 
-add_executable (uavExtraction ${SRCS})
-target_link_libraries (uavExtraction PRIVATE ${PCL_LIBRARIES})
-target_link_libraries(uavExtraction PRIVATE GSL::gsl)
-target_link_libraries (uavExtraction PUBLIC sfml-graphics)
+add_executable (${PROJECT_NAME} ${SRCS})
+target_link_libraries (${PROJECT_NAME} PRIVATE ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE GSL::gsl)
+target_link_libraries (${PROJECT_NAME} PUBLIC sfml-graphics)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    ${CMAKE_CURRENT_BINARY_DIR}/../Results/)

@@ -95,8 +95,8 @@ void PointCloudOperator::aligningPointCloud(bool fuselageGreaterThanWing, bool c
 float PointCloudOperator::getAngleXZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud) {
     pcl::PointXYZ minPt, maxPt;
     pcl::getMinMax3D(*inputCloud, minPt, maxPt);
-    float cutX = 350;
-    float cutY = 275;
+    float cutX = abs(minPt.x-maxPt.x)/6;
+    float cutY = abs(minPt.y-maxPt.y)/6;
 
     pcl::PassThrough<pcl::PointXYZ> pass;
     pcl::PointCloud<pcl::PointXYZ>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZ>);

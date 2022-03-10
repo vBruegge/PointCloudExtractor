@@ -1,4 +1,5 @@
 #include <string>
+#include <boost/filesystem.hpp>
 
 #include "PointCloudOperator.hpp"
 #include "GeometryExtractor.hpp"
@@ -8,8 +9,13 @@
 
 int main (int argc, char** argv)
 {
+    //create results directory
+    std::string sourceFolder = argv[1];
+    if(boost::filesystem::is_directory(sourceFolder + "Results") == false)
+        boost::filesystem::create_directory(sourceFolder + "/Results");
+
     //converts the point cloud in a valid pcd file
-    std::string pointCloudFile = argv[1];
+    std::string pointCloudFile = sourceFolder + "/Scans/" + argv[2];
     IOHandler io;
     io.convertTXTToPCDFile(pointCloudFile);
 
@@ -18,10 +24,10 @@ int main (int argc, char** argv)
     PointCloudOperator op(pointCloudFile, true, false);
 
     //possibility to generate a new sectioning file with the argument "new"
-    std::string sectionFilename = argv[2];
+    std::string sectionFilename = argv[3];
     if(sectionFilename == "new") {
-        sectionGenerationGUI(op.getPointCloudWithoutNormals());
-        sectionFilename = "section-generation.txt";
+        sectionFilename = pointCloudFile + "_section-generation.txt";
+        sectionGenerationGUI(op.getPointCloudWithoutNormals(), sourceFolder, sectionFilename);
     }
 
     //reads the given sectioning file !all of the vectors are needed!
@@ -31,7 +37,7 @@ int main (int argc, char** argv)
         verticalTailSections);
 
     //extract the reference airfoil
-    std::string filename = argv[3];
+    std::string filename = argv[4];
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances
@@ -56,7 +62,7 @@ int main (int argc, char** argv)
     gradient[1]/gradient[0]*(reference[indexBeforeSecondReference+1][0]-xPosSecondReference));
     
     //morphing wing sectioning
-    float positionFlap = std::stof(argv[4]);
+    float positionFlap = std::stof(argv[5]);
     MorphingWingParameter data[wingSections.size()];
     GeometryExtractor extract;
     for(int i = 0; i < wingSections.size(); i++) {
@@ -65,12 +71,12 @@ int main (int argc, char** argv)
         data[i] = section.getMorphingWingParameter();
         int indexTrailingEdge = section.findLeadingTrailingEdge()[1];
         extract.deleteTrailingEdge(section, indexTrailingEdge, 1-positionFlap);
-        AirfoilFitter fitAirfoil(section);
+        AirfoilFitter fitAirfoil(section, sourceFolder);
         fitAirfoil.replaceMorphedFlap(reference);
     }
 
     std::ofstream aircraftDataFile;
-    aircraftDataFile.open("../Results/aircraftDataFile.csv", std::fstream::out);
+    aircraftDataFile.open(sourceFolder + "/Results/aircraftDataFile.csv", std::fstream::out);
     io.writingMorphingWingDataInCSV(aircraftDataFile, data, wingSections.size());
     aircraftDataFile.close();
 }

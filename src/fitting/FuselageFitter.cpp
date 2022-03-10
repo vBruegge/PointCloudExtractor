@@ -4,8 +4,9 @@
 
 #include "FuselageFitter.hpp"
 
-FuselageFitter::FuselageFitter(Fuselage& section_) : section(section_){
+FuselageFitter::FuselageFitter(Fuselage& section_, std::string sourceFolder) : section(section_){
     section = section_;
+    io = IOHandler(sourceFolder);
 }
 
 void FuselageFitter::circularFit() {

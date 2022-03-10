@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10)
 
 project(morphingWingExtraction)
 
@@ -37,7 +37,12 @@ set(SRCS
     ${CMAKE_SOURCE_DIR}/../../src/bodies/Fuselage.cpp
     morphingWingExtraction.cpp)
 
-add_executable (morphingWingExtraction ${SRCS})
-target_link_libraries (morphingWingExtraction PRIVATE ${PCL_LIBRARIES})
-target_link_libraries(morphingWingExtraction PRIVATE GSL::gsl GSL::gslcblas)
-target_link_libraries (morphingWingExtraction PUBLIC sfml-graphics)
+add_executable (${PROJECT_NAME} ${SRCS})
+target_link_libraries (${PROJECT_NAME} PRIVATE ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE GSL::gsl)
+target_link_libraries (${PROJECT_NAME} PUBLIC sfml-graphics)
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    ${CMAKE_CURRENT_BINARY_DIR}/../Results/)

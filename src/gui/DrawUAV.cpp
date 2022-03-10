@@ -68,13 +68,13 @@ void UAV::draw(sf::RenderTarget& target, sf::RenderStates states) const
     target.draw(m_vertices, states);
 }
 
-void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
+void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string sourceFolder, std::string filename) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr shortendCloud (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PassThrough<pcl::PointXYZ> pass;
     pcl::PointXYZ min, max;
     pcl::getMinMax3D(*cloud, min, max);
 
-    std::ofstream fout("section-generation.txt");
+    std::ofstream fout(filename);
 
     std::cout << "Does the UAV have a v-tail? (y/n)\n";
     char answer;
@@ -94,7 +94,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
     UAV uav((int) cloud->size(), 1920, 1080);
 
     sf::Font font;
-    font.loadFromFile("../../../gui/Arial.TTF");
+    font.loadFromFile(sourceFolder + "/src/gui/Arial.TTF");
 
     //explanation of the seperate windows
     sf::Text text;
@@ -200,13 +200,12 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
                         //save chosen sections and close window
                         window.close();
                         for(int j = 0; j < lineArray.size(); j+=2) {
-                            float tmp;
+                            float tmp = lineArray[j].position.x-uav.translation().x;
                             if(i < 4) {
-                                float tmp = lineArray[j].position.x-uav.translation().x;
                                 fout << tmp/uav.getScalingFactor() << " ";
                             }
                             else {
-                                float tmp = lineArray[j].position.y-uav.translation().y;
+                                tmp = lineArray[j].position.y-uav.translation().y;
                                 fout << tmp/uav.getScalingFactor() << " ";
                             }
                             if(i == 0)
