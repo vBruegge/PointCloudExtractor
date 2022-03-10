@@ -1,14 +1,17 @@
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
+#include <stdlib.h>
 
 #include "IOHandler.hpp"
 
 void IOHandler::writingPointCloud(const std::string& filename, const std::vector<Eigen::Vector2d>& points) {
     std::ofstream fout( filename.c_str());
     fout << std::setprecision(10);
-	if( fout.fail() )
+	if( fout.fail()) {
 		std::cout << "Error: Could not open file";
+        exit(EXIT_FAILURE);
+    }    
 
 	for(int i = 0; i < points.size(); i++)
 	{
@@ -77,8 +80,10 @@ void IOHandler::readSectionFile(std::string& filename, float& splittingDistance,
     std::string type;
     std::vector<float> sections;
     //reading section file
-    if(!sectionFile.is_open())
+    if(!sectionFile.is_open()) {
         std::cout << "Error, no section file!\n";
+        exit(EXIT_FAILURE);
+    }    
 
     std::getline(sectionFile, tailType);
 
@@ -129,9 +134,10 @@ void IOHandler::readLineInVector(std::string& line, std::string& type, std::vect
 
 void IOHandler::convertTXTToPCDFile(std::string& filename) {
     std::ifstream fin(filename, std::ifstream::in);
-    if(!fin.is_open())
+    if(!fin.is_open()) {
         std::cout << "Error, no point cloud file!\n";
-    
+        exit(EXIT_FAILURE);
+    }    
     std::stringstream buffer;
     buffer << fin.rdbuf();
     std::string file = buffer.str();
@@ -158,8 +164,10 @@ std::vector<Eigen::Vector2d> IOHandler::readAirfoilDATFile(const std::string& fi
     std::ifstream airfoil(filename, std::ifstream::in);
     std::string line;
     //reading section file
-    if(!airfoil.is_open())
+    if(!airfoil.is_open()) {
         std::cout << "Error, no airfoil file!\n";
+        exit(EXIT_FAILURE);
+    }    
     
     std::vector<Eigen::Vector2d> points;
     std::stringstream ss;
