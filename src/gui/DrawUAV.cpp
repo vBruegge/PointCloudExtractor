@@ -94,7 +94,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
     UAV uav((int) cloud->size(), 1920, 1080);
 
     sf::Font font;
-    font.loadFromFile("../../../gui/Arial.TTF");
+    font.loadFromFile("../../../src/gui/Arial.TTF");
 
     //explanation of the seperate windows
     sf::Text text;
@@ -200,13 +200,12 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
                         //save chosen sections and close window
                         window.close();
                         for(int j = 0; j < lineArray.size(); j+=2) {
-                            float tmp;
+                            float tmp = lineArray[j].position.x-uav.translation().x;
                             if(i < 4) {
-                                float tmp = lineArray[j].position.x-uav.translation().x;
                                 fout << tmp/uav.getScalingFactor() << " ";
                             }
                             else {
-                                float tmp = lineArray[j].position.y-uav.translation().y;
+                                tmp = lineArray[j].position.y-uav.translation().y;
                                 fout << tmp/uav.getScalingFactor() << " ";
                             }
                             if(i == 0)
