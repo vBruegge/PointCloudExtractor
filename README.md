@@ -33,8 +33,9 @@ The programm requires five inputs:
 - a boolean (y/n) if the fuselage is greater than the wing (e.g. jets)
 - the name of the section generation file in the "Scans" folder or a "new"
 - type of sectioning (0 for no flaps rotation, 1 for flap rotation)
-
-`./result/bin/uavExtraction $PWD 15tol.txt n section-generation.txt 0`
+```
+./result/bin/uavExtraction $PWD 15tol.txt n section-generation.txt 0
+```
 
 This would result in the extraction of the point cloud named "15tol.txt" which was copied in the "Scans" folder beforehand. It is a normal configuration, so the wingspan is greater than the fuselage. Therefore no extra rotation is needed (n). The sections are predefined in "section-generation.txt" (also in the "Scans" folder). The aircraft was scanned without the flaps actuated, therefore the rotation logic is skipped.
 
@@ -61,8 +62,9 @@ The programm requires five inputs:
 - the name of the section generation file in the build folder or a "new"
 - the name of the reference foil in the build folder
 - the position where the extracted foil should be replaced by the reference foil (e.g. flap position)
-
-`./result/bin/morphingWingExtraction $PWD DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84`
+```
+./result/bin/morphingWingExtraction $PWD DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84
+```
 
 This results in the sectioning of the point cloud "DemoMono.txt". The position where to section are specified in the "section-generation.txt". The reference airfoil is named "B106_optairfoil.dat". The flap should be replaced by the reference foil, its position is 0.84.
 
@@ -94,13 +96,17 @@ If you use another distribution, you sould have enough knowledge to get this don
 ### Building with the nix flake
 To use the building operation of nix, there are two possible ways. Please be aware, that you can only have one build (either the uavExtraction or the morphingWingExtraction). If you want to switch from one tool to the other, rebuild the wanted package.
 1. Clone the repository beforehand and then use nix for building:
-    In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and enter:
-    - `nix build .#uavExtraction` for building the aircraft extraction example
-    - `nix build .#morphingWingExtraction`for building the morphing wing extraction example
+    In this case, the repository is cloned to your machine using e.g. `git clone git@gitlab.lrz.de:000000000149A72A/pointcloudextractor_lls.git` (SSH). Then go to the root of the git repository in an Terminal and run
+    - for building the aircraft extraction example:
+    ```nix build .#uavExtraction```
+    - for building the morphing wing extraction example
+    ```nix build .#morphingWingExtraction```
 2. Building the git repository without cloning:
-    In this case, the repository is cloned by nix and builded in the same step. Enter:
-    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction` for building the aircraft extraction example
-    - `nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#morphingWingExtraction` for building the morphing wing extraction example
+    In this case, the repository is cloned by nix and builded in the same step. Run
+    - for building the aircraft extraction example:
+    ```nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#uavExtraction```
+    - for building the morphing wing extraction example
+    ```nix build git+https://gitlab.lrz.de/000000000149A72A/pointcloudextractor_lls.git?ref=main#morphingWingExtraction```
 
 The executeables can be found in `result/bin`.
 
