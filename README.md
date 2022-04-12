@@ -51,6 +51,8 @@ make
 
 This would result in the sectioning of the point cloud named "lizard.txt". It was copied in the "Scans" folder and is a jet with a significant greater fuselage as the wingspan. Therefore a extra rotation is needed (y). There is no sectioning file yet, a new one has to be generated (new) using a GUI. The flaps were actuated in the scanning process and should be derotated (1).
 
+This problem can also occur on some distributions like Arch - testing of the GUI was done using Ubuntu 20.4. 
+
 ### morphingWingExtraction
 
 The code for the morphing wing extraction can be found in `examples/morphingWingExtraction`.
