@@ -40,7 +40,7 @@ Here the section generation file is read. All defined distances of the file are 
 std::string filename = argv[3];
 std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename)
 ```
-In this lines, the reference foil is read and saved as a vector of 2D points. The name of the reference foil is defined by the third input argument.
+In this lines, the reference foil is read and saved as a vector of 2D points. The name of the reference foil is defined by the third input argument. The position of the reference points are also specified here. If these are different on the wing at hand, please change the value before compiling.
 ```
 float xPosFirstReference = 0.8008; //CellSkin, use 0.801998 for Mono
 float xPosSecondReference = 0.418467; //CellSkin, use 0.399124 for Mono

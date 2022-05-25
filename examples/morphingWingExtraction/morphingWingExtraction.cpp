@@ -40,7 +40,7 @@ int main (int argc, char** argv)
         verticalTailSections);
 
     //extract the reference airfoil
-    std::string filename = argv[4];
+    std::string filename = sourceFolder + "/Scans/" + argv[4];
     std::vector<Eigen::Vector2d> reference = io.readAirfoilDATFile(filename);
 
     //computes the reference points at the given distances

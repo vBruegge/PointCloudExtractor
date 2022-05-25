@@ -56,13 +56,15 @@ This problem can also occur on some distributions like Arch - testing of the GUI
 ### morphingWingExtraction
 
 The code for the morphing wing extraction can be found in `examples/morphingWingExtraction`.
-The point cloud is supposed to be in a directery called "Scans" in the root directory of this repository. If you have generated a sectioning file beforehand, this should also be in this directory. Two examplary program execution are presented below, one if you have build the project with the nix flake and one without. If you have built the tool using the nix flake, your executeable can be found in `result/bin`.
+The point cloud is supposed to be in a directery called "Scans" in the root directory of this repository. If you have generated a sectioning file beforehand, this should also be in this directory. Also the reference airfoil is saved in this folder. Two examplary program execution are presented below, one if you have build the project with the nix flake and one without. If you have built the tool using the nix flake, your executeable can be found in `result/bin`.
+
+**Important:** Before building, please verify the position of the references in the 'examples/morphingWingExtraction/morphingWingExtraction.cpp'. They can be found in line 47 and 48.
 
 The programm requires five inputs:
 - the absolute path to the root directory of the repository (use $PWD if you execute the program from the root directory)
 - the point cloud which should be sectioned as TXT-File in the Scans folder
 - the name of the section generation file in the Scans folder or a "new"
-- the name of the reference foil in the build folder
+- the name of the reference foil in the Scans folder
 - the position where the extracted foil should be replaced by the reference foil (e.g. flap position)
 ```
 ./result/bin/morphingWingExtraction $PWD DemoMono.txt section-generation.txt B106_optairfoil.dat 0.84
