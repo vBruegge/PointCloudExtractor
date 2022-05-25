@@ -29,6 +29,9 @@ int main (int argc, char** argv)
         sectionFilename = pointCloudFile + "_section-generation.txt";
         sectionGenerationGUI(op.getPointCloudWithoutNormals(), sourceFolder, sectionFilename);
     }
+    else
+        sectionFilename = sourceFolder + "/Scans/" + sectionFilename;
+
 
     //reads the given sectioning file !all of the vectors are needed!
     std::vector<float> fuselageSections, wingSections, horizontalTailSections, verticalTailSections;
