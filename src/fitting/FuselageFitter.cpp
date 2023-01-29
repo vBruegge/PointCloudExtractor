@@ -38,7 +38,7 @@ void FuselageFitter::ellipsoidalFit() {
         newPoints[i] = Eigen::Vector2d(xi, yi);
     }
     io.writingPointCloud(params.name, newPoints);
-    params.epsilon = 1.0;
+    params.epsilon = 2.0;
     section.setAllFuselageParameter(params);
 }
 
