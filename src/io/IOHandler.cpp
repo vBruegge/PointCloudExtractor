@@ -49,7 +49,7 @@ void IOHandler::writingMorphingWingDataInCSV( std::ofstream& outStream, Morphing
     ss << std::setprecision(10);
     ss << "/TABLE; MorphingWing\n\r"
         << "/FIELDS\n\r"
-        << "Filename; Sectioning Distance [mm]; Scale []; rotationAngle [deg]\n\r";
+        << "Filename; Sectioning Distance [mm]; Scale []; Rotation Angle [deg]\n\r";
     for(int i = 0; i < length; i++) {
         ss << data[i].name << "; " << data[i].cuttingDistance << "; " << data[i].scale << "; " << data[i].rotationAngle << "\n\r";
     }
