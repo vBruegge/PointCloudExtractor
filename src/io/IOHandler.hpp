@@ -21,10 +21,10 @@ public:
     IOHandler() = default;
 
     /**
-     * @brief writes an airfoil DAT file
+     * @brief writes a DAT file from a point cloud
      * 
      * @param filename name of the file
-     * @param points points of the airfoil
+     * @param points points of the point cloud
      */
     void writingPointCloud( const std::string& filename, const std::vector<Eigen::Vector2d>& points );
 
