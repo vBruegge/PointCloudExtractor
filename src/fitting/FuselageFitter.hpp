@@ -24,14 +24,14 @@ public:
      * @brief fits the saved fuselage cloud with a ellipse
      * 
      */
-    void ellipseFit();
+    void ellipsoidalFit();
 
     /**
      * @brief fits the saved fuselage cloud with a superellipse
      * 
      * @return FuselageParameter new fitted parameters (including epsilon)
      */
-    FuselageParameter superellipseFit();
+    FuselageParameter superellipsoidalFit();
 
 private:
     Fuselage section;
