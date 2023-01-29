@@ -58,7 +58,7 @@ int main (int argc, char** argv)
     for(int i = 0; i < fuselageSections.size(); i++) {
         Fuselage section = extract.sectioningCloudY(fuselage, fuselageSections[i]);
         FuselageFitter fitFuselage(section, sourceFolder);
-        dataFuselage[i] = fitFuselage.superellipseFit();
+        dataFuselage[i] = fitFuselage.superellipsoidalFit();
         std::cout << "Writing fuselage complete...\n";
     }
 

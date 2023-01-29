@@ -27,7 +27,7 @@ void FuselageFitter::circularFit() {
     section.setAllFuselageParameter(params);
 }
 
-void FuselageFitter::ellipseFit() {
+void FuselageFitter::ellipsoidalFit() {
     FuselageParameter params = section.getFuselageParameter();
 
     std::vector<Eigen::Vector2d> newPoints(360);
@@ -42,7 +42,7 @@ void FuselageFitter::ellipseFit() {
     section.setAllFuselageParameter(params);
 }
 
-FuselageParameter FuselageFitter::superellipseFit() {
+FuselageParameter FuselageFitter::superellipsoidalFit() {
     FuselageParameter params = section.getFuselageParameter();
     std::vector<Eigen::Vector2d> points(section.getFuselage()->points.size());
     for(int i = 0; i < points.size(); i++) {
