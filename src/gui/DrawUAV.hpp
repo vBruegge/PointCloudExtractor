@@ -37,6 +37,8 @@ private:
  * @brief draws different sights of the uav to determine the distances where to cut
  * 
  * @param cloud which is sectioned
+ * @param sourceFolder path to writeable folder including the point cloud
+ * @param filename name of the point cloud
  */
 void sectionGenerationGUI(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string sourceFolder, std::string filename);
 
