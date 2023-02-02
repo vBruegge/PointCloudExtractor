@@ -2,11 +2,10 @@
 #define UAV_H
 
 #include <SFML/Graphics.hpp>
-#include <cassert>
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
-#include <vector>
 #include <string>
+#include <eigen3/Eigen/Core>
 
 class UAV : public sf::Drawable, public sf::Transformable
 {
@@ -14,8 +13,8 @@ public:
 
     int windowWidth;
     int windowHeight;
-    pcl::PointXYZ minPt;
-    pcl::PointXYZ maxPt;
+    Eigen::Vector2f minPt;
+    Eigen::Vector2f maxPt;
     float scaling;
 
     /**
@@ -68,8 +67,6 @@ private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
     sf::VertexArray m_vertices;
     sf::Texture m_texture;
-    float pcl::_PointXYZ::* dim1;
-    float pcl::_PointXYZ::* dim2;
 };
 
 /**

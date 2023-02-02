@@ -4,6 +4,7 @@
 #include <pcl/common/geometry.h>
 #include <stdio.h>
 #include <fstream>
+#include <vector>
 
 //initialize drawing object
 UAV::UAV(int numPoints, int width, int height) {
@@ -21,25 +22,26 @@ void UAV::loadUAV (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float pcl::_PointX
         m_vertices[i].position = tmp;
         m_vertices[i].color = sf::Color::Yellow;
     }
-    dim1 = _dim1;
-    dim2 = _dim2;
-    pcl::getMinMax3D(*cloud, minPt, maxPt);
+    pcl::PointXYZ minPt_, maxPt_;
+    pcl::getMinMax3D(*cloud, minPt_, maxPt_);
+    minPt = {minPt_.*_dim1, minPt_.*_dim2};
+    maxPt = {maxPt_.*_dim1, maxPt_.*_dim2};
 }
 
 float UAV::getScalingFactor(){
-    if(abs(minPt.*dim1-maxPt.*dim1) > abs(minPt.*dim2-maxPt.*dim2))
-        return windowWidth/(abs(minPt.*dim1-maxPt.*dim1)+200);
+    if(abs(minPt[0]-maxPt[0]) > abs(minPt[1]-maxPt[1]))
+        return windowWidth/(abs(minPt[0]-maxPt[0])+200);
     else
-        return windowHeight/(abs(minPt.*dim2-maxPt.*dim2)+100);
+        return windowHeight/(abs(minPt[1]-maxPt[1])+100);
 }
 
 void UAV::resize(int size) {m_vertices.resize(size);}
 
 sf::Vector2f UAV::translation() {
-    if(abs(minPt.*dim1) < 1)
-        return sf::Vector2f(100.f, (windowHeight-abs(maxPt.*dim2+minPt.*dim2))/(float)2);
+    if(abs(minPt[0]) < 1)
+        return sf::Vector2f(100.f, (windowHeight-abs(maxPt[1]+minPt[1]))/(float)2);
     else
-        return sf::Vector2f((windowWidth-abs(maxPt.*dim1+minPt.*dim1))/(float)2, (windowHeight-abs(maxPt.*dim2+minPt.*dim2))/(float)2);
+        return sf::Vector2f((windowWidth-abs(maxPt[0]+minPt[0]))/(float)2, (windowHeight-abs(maxPt[1]+minPt[1]))/(float)2);
 }
 
 
@@ -49,17 +51,17 @@ void UAV::draw(sf::RenderTarget& target, sf::RenderStates states) const
     states.transform *= getTransform(); // getTransform() is defined by sf::Transformable
 
     sf::Transform t = sf::Transform::Identity;
-    if(abs(minPt.*dim1) < 1)
+    if(abs(minPt[0]) < 1)
         t.translate(100.f, (windowHeight/(float)2));
-    else if(maxPt.*dim1 + minPt.*dim1 < -windowWidth)
+    else if(maxPt[0] + minPt[0] < -windowWidth)
         t.translate(windowWidth - 100.f, (windowHeight/(float)2));
     else
         t.translate(windowWidth/(float)2, windowHeight/(float)2);
     
-    if(abs(minPt.*dim1-maxPt.*dim1) > abs(minPt.*dim2-maxPt.*dim2))
-        t.scale(windowWidth/(abs(minPt.*dim1-maxPt.*dim1)+200)*scaling, windowWidth/(abs(minPt.*dim1-maxPt.*dim1)+200)*scaling);
+    if(abs(minPt[0]-maxPt[0]) > abs(minPt[1]-maxPt[1]))
+        t.scale(windowWidth/(abs(minPt[0]-maxPt[0])+200)*scaling, windowWidth/(abs(minPt[0]-maxPt[0])+200)*scaling);
     else
-        t.scale(windowHeight/(abs(minPt.*dim2-maxPt.*dim2)+100)*scaling, windowHeight/(abs(minPt.*dim2-maxPt.*dim2)+100)*scaling);
+        t.scale(windowHeight/(abs(minPt[1]-maxPt[1])+100)*scaling, windowHeight/(abs(minPt[1]-maxPt[1])+100)*scaling);
     states.transform = t;
 
     // apply the texture
@@ -137,7 +139,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::strin
 
                 uav.resize(shortendCloud->size());
                 uav.loadUAV(shortendCloud, &pcl::PointXYZ::x, &pcl::PointXYZ::z);
-                if(abs(uav.maxPt.x) == abs(max.x)) {
+                if(abs(uav.maxPt[0]) == abs(max.x)) {
                     text.setString("Please choose the wished wing sections");
                     fout << "wing ";
                 }
@@ -160,7 +162,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::strin
 
                 uav.resize(shortendCloud->size());
                 uav.loadUAV(shortendCloud, &pcl::PointXYZ::x, &pcl::PointXYZ::z);
-                if(abs(uav.maxPt.x) == abs(max.x)) {
+                if(abs(uav.maxPt[0]) == abs(max.x)) {
                     text.setString("Please choose the wished wing sections");
                     fout << "wing ";
                 }
@@ -177,7 +179,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::strin
 
                 uav.resize(shortendCloud->size());
                 uav.loadUAV(shortendCloud, &pcl::PointXYZ::z, &pcl::PointXYZ::y);
-                if(abs(uav.maxPt.x-uav.minPt.x) == abs(max.x-min.x)) {
+                if(abs(uav.maxPt[0]-uav.minPt[0]) == abs(max.x-min.x)) {
                     pass.setInputCloud (cloud);
                     pass.setFilterFieldName ("y");
                     pass.setFilterLimits (-FLT_MAX, split);
