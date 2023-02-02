@@ -15,7 +15,7 @@ UAV::UAV(int numPoints, int width, int height) {
 }
 
 //change attributes of the UAV drawing object
-bool UAV::loadUAV (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float pcl::_PointXYZ::* _dim1, float pcl::_PointXYZ::* _dim2) {
+void UAV::loadUAV (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float pcl::_PointXYZ::* _dim1, float pcl::_PointXYZ::* _dim2) {
     for(int i = 0; i < cloud->size();i++) {
         sf::Vector2f tmp = sf::Vector2f((cloud->points[i].*_dim1), (cloud->points[i].*_dim2));
         m_vertices[i].position = tmp;
@@ -24,15 +24,15 @@ bool UAV::loadUAV (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float pcl::_PointX
     dim1 = _dim1;
     dim2 = _dim2;
     pcl::getMinMax3D(*cloud, minPt, maxPt);
-
-    return true;
 }
+
 float UAV::getScalingFactor(){
     if(abs(minPt.*dim1-maxPt.*dim1) > abs(minPt.*dim2-maxPt.*dim2))
         return windowWidth/(abs(minPt.*dim1-maxPt.*dim1)+200);
     else
         return windowHeight/(abs(minPt.*dim2-maxPt.*dim2)+100);
 }
+
 void UAV::resize(int size) {m_vertices.resize(size);}
 
 sf::Vector2f UAV::translation() {
@@ -40,7 +40,8 @@ sf::Vector2f UAV::translation() {
         return sf::Vector2f(100.f, (windowHeight-abs(maxPt.*dim2+minPt.*dim2))/(float)2);
     else
         return sf::Vector2f((windowWidth-abs(maxPt.*dim1+minPt.*dim1))/(float)2, (windowHeight-abs(maxPt.*dim2+minPt.*dim2))/(float)2);
-    }
+}
+
 
 void UAV::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
