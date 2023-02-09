@@ -252,7 +252,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::strin
                         break;
                     case sf::Event::EventType::MouseWheelScrolled: //zoom in/zoom out
                         if(e.mouseWheelScroll.delta > 0)
-          uav.scaling *= 1.1f;
+                            uav.scaling *= 1.1f;
                         else
                             uav.scaling /= 1.1f;
                         break;

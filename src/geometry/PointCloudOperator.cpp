@@ -14,6 +14,9 @@ PointCloudOperator::PointCloudOperator(pcl::PointCloud<pcl::PointXYZ>::Ptr input
     if(cloudNoNormals->points.size()>1000000) {
         downsize();
     }
+    else {
+        downsampled = inputCloud;
+    }
     aligningPointCloud(fuselageGreaterThanWing, completeAircaft);
     estimateNormals();
 }
