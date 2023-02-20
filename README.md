@@ -55,6 +55,8 @@ This problem can also occur on some distributions like Arch - testing of the GUI
 
 ### morphingWingExtraction
 
+**Preliminary:** For the extraction of a morphing wing, additional references has to be added on the wing (segment). These are rectangular profiles which will be attached to the bottom side of the wing. Two references are needed for the rotation and scaling processes. The x-position of the edges laying closest to the trailing edge will be used as reference/scaling positions.
+
 The code for the morphing wing extraction can be found in `examples/morphingWingExtraction`.
 The point cloud is supposed to be in a directery called "Scans" in the root directory of this repository. If you have generated a sectioning file beforehand, this should also be in this directory. Also the reference airfoil is saved in this folder. Two examplary program execution are presented below, one if you have build the project with the nix flake and one without. If you have built the tool using the nix flake, your executeable can be found in `result/bin`.
 

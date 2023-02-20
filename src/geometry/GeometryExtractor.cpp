@@ -331,7 +331,7 @@ int GeometryExtractor::getIndexFlapPosition(pcl::PointCloud <pcl::PointNormal>::
   //calculate approximal normal of the foil from the mid of the foil
   Eigen::Vector3f normalFoil =  computeAverageNormalOfFoil(inputCloud, searchPoint, indexTrailingEdge, 30, 10, -1);
 
-//calculate normal of the flap and its position with nearest neighbor search
+  //calculate normal of the flap and its position with nearest neighbor search
   //starting point: 9/10 distance between leading edge and trailing edge
   searchPoint.y = inputCloud->points[indexTrailingEdge].y-(inputCloud->points[indexTrailingEdge].y-inputCloud->points[indexLeadingEdge].y)/8.5;
   searchPoint.z = (inputCloud->points[indexTrailingEdge].z);
@@ -594,6 +594,7 @@ Eigen::Vector3f GeometryExtractor::computeAverageNormalOfFoil(pcl::PointCloud<pc
       }
     }
   }
+  normal.normalize();
   return normal;
 
 }
@@ -715,7 +716,7 @@ Airfoil GeometryExtractor::findingMorphedReferencePoints(pcl::PointCloud<pcl::Po
         searchPoint = compare->points[pointIndexSearch[i]];
         float angle = pcl::getAngle3D(Eigen::Vector3f::UnitZ(),Eigen::Vector3f(searchPoint.normal_x, searchPoint.normal_y, searchPoint.normal_z));
         float angle2 = pcl::getAngle3D(-Eigen::Vector3f::UnitZ(),Eigen::Vector3f(searchPoint.normal_x, searchPoint.normal_y, searchPoint.normal_z));
-        //calculate angle betweeen the surface normal of the flap and the foil if there is a discontinuity
+        //calculate angle betweeen the surface normal of the reference and the foil if there is a discontinuity
         if(std::min(angle, angle2) > 20.0/180.0*M_PI) {
           if(abs(trailingEdge - searchPoint.y) < 0.4*lengthFoil && abs(trailingEdge - searchPoint.y) > 0.1*lengthFoil
                     && firstPointIndex == -1) {
