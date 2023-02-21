@@ -110,7 +110,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::strin
     usingHelp.setFont(font);
     usingHelp.setCharacterSize(24);
     usingHelp.setFillColor(sf::Color::White);
-    usingHelp.move(1450.f,850.f);
+    usingHelp.move(1450.f,800.f);
     usingHelp.setString("Left click: select a section\nRight click (on section): deselect section\nScrolling: Zoom in/out\nClose Window: Save selection");
 
     for(int i = 0; i < numSections; i++) {
