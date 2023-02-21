@@ -97,7 +97,7 @@ void sectionGenerationGUI (pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::strin
     UAV uav((int) cloud->size(), 1920, 1080);
 
     sf::Font font;
-    font.loadFromFile(sourceFolder + "/src/gui/Arial.TTF");
+    font.loadFromFile(sourceFolder + "/src/gui/LiberationSans-Regular.ttf");
 
     //explanation of the seperate windows
     sf::Text text;
