@@ -1,4 +1,4 @@
-# PointCloudExtractor_LLS
+# PointCloudExtractor
 
 # Introduction
 This is a library for extracting geometries of a 3D scan. The main focus lies on the extraction of aerospace structures like foil geometries, but in general is is applicable on all forms of 3D-scans. It is capable of orienting a point cloud and extracting before defined sections as well as post-processing the data for usage in low fidelity tools like XFLR5.
